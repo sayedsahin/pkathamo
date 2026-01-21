@@ -1,0 +1,7 @@
+*.mp3
+*.pdf
+*.zip
+.env
+# /public
+/storage/cache/*.*
+/vendor
