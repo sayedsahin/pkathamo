@@ -3,5 +3,6 @@
 *.zip
 .env
 # /public
-/storage/cache/*.*
+/storage/cache/*.php
+/storage/cache/*.cache
 /vendor
