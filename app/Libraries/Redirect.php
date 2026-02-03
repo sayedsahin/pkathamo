@@ -22,7 +22,7 @@ class Redirect
 		return $this;
 	}
 
-	public function back() 
+	public function back()
 	{
 		if (isset($_SERVER['HTTP_REFERER'])) {
 			$url = $_SERVER['HTTP_REFERER'];
@@ -33,13 +33,13 @@ class Redirect
 			}else{
 				$this->link = BASE_URL;
 			}
-	         
+
 	    }else{
-	    	$this->link = BASE_URL; 
+	    	$this->link = BASE_URL;
 	    }
 	    return $this;
 	}
-	
+
 	public function redirect()
 	{
 		if (!empty($this->link)) {
@@ -54,7 +54,7 @@ class Redirect
 				header("Location: " . $this->link);
 				exit;
 			}
-			
+
 		}else{
 			foreach ($this->message as $key => $value) {
 				echo $key.' = '.$value.'<br>';

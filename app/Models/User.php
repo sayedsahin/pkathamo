@@ -1,7 +1,7 @@
 <?php 
-namespace QueryBuilders;
+namespace App\Models;
 
-use Systems\QueryBuilder;
+use App\Systems\QueryBuilder;
 
 class User extends QueryBuilder
 {

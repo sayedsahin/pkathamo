@@ -1,6 +1,6 @@
 <?php
 
-namespace Systems;
+namespace App\Systems;
 
 use Closure;
 use ReflectionClass;

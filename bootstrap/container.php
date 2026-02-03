@@ -1,6 +1,6 @@
 <?php
 
-use Systems\Container;
+use App\Systems\Container;
 
 $config = require __DIR__ . '/../config/container.php';
 

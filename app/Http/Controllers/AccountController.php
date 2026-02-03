@@ -1,12 +1,12 @@
 <?php declare(strict_types=1);
 
-namespace App\Controllers;
+namespace App\Http\Controllers;
 
 use App\Libraries\Form;
-use Systems\Cookie;
-use Systems\QueryBuilder;
-use Systems\Role;
-use Systems\Session;
+use App\Systems\Cookie;
+use App\Systems\QueryBuilder;
+use App\Systems\Role;
+use App\Systems\Session;
 
 class AccountController
 {

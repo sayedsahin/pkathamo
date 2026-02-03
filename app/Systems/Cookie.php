@@ -1,9 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Systems;
-
-use Systems\QueryBuilder;
-use Systems\Session;
+namespace App\Systems;
 
 class Cookie{
 

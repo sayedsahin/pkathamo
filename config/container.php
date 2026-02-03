@@ -4,7 +4,7 @@
 return [
 
     'singletons' => [
-        \Systems\Database::class,
+        \App\Systems\Database::class,
         // \Http\Request::class,
         // \Http\Response::class,
         // \Cache\FileCache::class,

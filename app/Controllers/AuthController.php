@@ -3,23 +3,26 @@
 namespace App\Controllers;
 
 use App\Libraries\Form;
-use Systems\Cookie;
-use Systems\QueryBuilder;
-use Systems\Role;
-use Systems\Session;
+use App\Systems\QueryBuilder;
+use App\Systems\Cookie;
+use App\Systems\Role;
+use App\Systems\Session;
 
-class AccountController
+class AuthController extends Controller
 {
+
 	protected object $model;
 	public function __construct()
 	{
+		// $this->middleware(RateLimit::class);
+		// $this->middleware(Csrf::class);
 		$this->model = new QueryBuilder;
 	}
 
 	public function index()
 	{
-		// phpinfo();
-		// return;
+		phpinfo();
+		return;
 		$users = $this->model->table('users')->get();
 		pr($users);
 	}
@@ -33,7 +36,7 @@ class AccountController
 				return redirect();
 			}
 		}
-		return view('login');
+		return view('auth.login', ['title' => 'Login']);
 	}
 
 	public function loginRequest()

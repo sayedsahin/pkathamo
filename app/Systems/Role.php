@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Systems;
+namespace App\Systems;
 
 class Role{
 
@@ -12,7 +12,6 @@ class Role{
 			exit;
 		}
 	}
-	 
 	public static function auth()
 	{
 		Session::init();

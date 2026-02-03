@@ -2,8 +2,8 @@
 
 // Account Route
 
-use App\Controllers\AccountController;
+use App\Controllers\AuthController;
 
-$route->get('/', [AccountController::class, 'index']);
-$route->post('/login', [AccountController::class, 'login']);
-$route->get('/logout', [AccountController::class, 'logout']);
+$route->get('/', [AuthController::class, 'index']);
+$route->get('/login', [AuthController::class, 'login']);
+$route->get('/logout', [AuthController::class, 'logout']);
