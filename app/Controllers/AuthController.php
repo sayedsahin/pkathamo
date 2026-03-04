@@ -3,10 +3,13 @@
 namespace App\Controllers;
 
 use App\Libraries\Form;
+use App\Models\DB;
 use App\Systems\QueryBuilder;
-use App\Systems\Cookie;
+use App\Systems\Session\Cookie;
 use App\Systems\Role;
-use App\Systems\Session;
+use App\Systems\Session\RememberToken;
+use App\Systems\Session\Session;
+use App\Validation\Validator;
 
 class AuthController extends Controller
 {
@@ -21,6 +24,8 @@ class AuthController extends Controller
 
 	public function index()
 	{
+		echo 123;
+		return;
 		phpinfo();
 		return;
 		$users = $this->model->table('users')->get();
@@ -41,48 +46,99 @@ class AuthController extends Controller
 
 	public function loginRequest()
 	{
-		Role::guest();
-		$input = new Form;
-		$input->post('username')->required();
-		$input->post('password')->required();
+		// Role::guest();
+		// $data = null;
+		// $errors = [];
+		verify_csrf();
+		// Validation way 1: Using Try-Catch
+		try {
+			$data = Validator::make($_POST)
+				->bail()
+				->required(['email', 'password'])
+				->nullable(['first_name', 'last_name', 'remember'])
+				->string(['first_name', 'last_name'])
+				->email('email')
+				->min('password', 8)
+				->confirmed('password')
+				->validated();
+				// ✅ VALID DATA
+				// $data['email']
+				// $data['password']
 
-		 if (!$input->submit()) {
-			return redirect()->back()->with(['errors' => $input->errors]);
+				// dd($data);
+		} catch (\App\Validation\ValidationException $e) {
+			$errors = $e->errors();
+			// dd($errors);
 		}
-	
-		$username = $input->values['username'];
-		$password = $input->values['password'];
+
+		// Validation way 2: Using Input Class with Method Chaining
+		// $validator = Validator::make($_POST)
+		// 	->required(['email', 'password'])
+		// 	->email('email')
+		// 	->min('password', 8);
+		// if ($validator->fails()) {
+		// 	$errors = $validator->errors();
+		// 	return;
+		// }
+		// $data = $validator->validated();
+
+
+		$email = $data['email'];
+		$password = $data['password'];
 
 		$user = $this->model->table('users')
-			->where('username', $username)
-			->where('password', md5($password))
+			->where('email', $email)
 			->first();
 
-		if (!$user) {
+		if (!$user || !password_verify($password, $user->password)) {
 			return redirect()->back()->with(['error' => 'Incorrect User or Password']);
 		}
 
-		if (isset($_POST['remember'])) {
-			$token = hash('sha256', uniqid());
-			$ip_address = $this->getUserIP();
-			$user_agent = $_SERVER['HTTP_USER_AGENT'];
-			$expire_at = time()+60*60*24*90;
-			$this->model->table('user_cookies')->insert([
-				'user_id' => $user->id,
-				'token' => $token,
-				'ip_address' => $ip_address,
-				'user_agent' => $user_agent,
-				'expire_at' => date('Y-m-d H:i:s', $expire_at),
+		Session::regenerate();
+		Session::set('user_id', (int) $user->id);
+		Session::set('role', $user->role ?? 'user');
+		$db = new DB;
+		if ($data['remember'] ?? false) {
+
+			$token = RememberToken::generate();
+
+			$db->table('remember_tokens')->insert([
+				'user_id'    => $user->id,
+				'token_hash' => $token['hash'],
+				'expires_at' => date('Y-m-d H:i:s', time() + 86400 * 30),
+				'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? '',
+				'created_at' => date('Y-m-d H:i:s'),
 			]);
-			setcookie('token', $token, $expire_at);
+
+			Cookie::set(
+				'remember_token',
+				$token['raw'],
+				86400 * 30,
+				'Lax'
+			);
 		}
 
-		Session::set("login", true);
-		Session::set("id", (int) $user->id);
-		Session::set("name", $user->name);
-		Session::set("username", $user->username);
-		Session::set("email", $user->email);
-		Session::set("role", (int) $user->role_id);
+		// if (isset($_POST['remember'])) {
+		// 	$token = hash('sha256', uniqid());
+		// 	$ip_address = $this->getUserIP();
+		// 	$user_agent = $_SERVER['HTTP_USER_AGENT'];
+		// 	$expire_at = time()+60*60*24*90;
+		// 	$this->model->table('user_cookies')->insert([
+		// 		'user_id' => $user->id,
+		// 		'token' => $token,
+		// 		'ip_address' => $ip_address,
+		// 		'user_agent' => $user_agent,
+		// 		'expire_at' => date('Y-m-d H:i:s', $expire_at),
+		// 	]);
+		// 	setcookie('token', $token, $expire_at);
+		// }
+
+		// Session::set("login", true);
+		// Session::set("id", (int) $user->id);
+		// Session::set("name", $user->name);
+		// Session::set("username", $user->username);
+		// Session::set("email", $user->email);
+		// Session::set("role", (int) $user->role_id);
 		return redirect();
 	}
 
@@ -136,7 +192,7 @@ class AuthController extends Controller
 
 		unset($input->values['confirm_password']);
 		
-		$input->values['password'] = md5($input->values['password']);
+		$input->values['password'] = $password = password_hash($input->values['password'], PASSWORD_DEFAULT);
 
 		$user_id = $this->model->table('users')->insert($input->values, true);
 
@@ -150,11 +206,22 @@ class AuthController extends Controller
 
 	public function logout()
 	{
-		Role::auth();
-		Session::destroy();
-		if (isset($_COOKIE['token'])) {
-			Cookie::destroy();
+		// Role::auth();
+		// Session::destroy();
+		// if (isset($_COOKIE['token'])) {
+		// 	Cookie::destroy();
+		// }
+
+		$userId = Session::get('user_id');
+
+		if ($userId) {
+			$db = new DB();
+			$db->table('remember_tokens')->where('user_id', $userId)->delete();
 		}
+
+		Session::destroy();
+
+		Cookie::forget('remember_token');
 		return redirect('/login');
 	}
 

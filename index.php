@@ -27,12 +27,17 @@ if (is_file(__DIR__ . '/storage/cache/env.php')) {
 */
 require __DIR__ . '/config/config.php';
 
+
 /*
 |--------------------------------------------------------------------------
 | Detect Request Type (API or WEB)
 |--------------------------------------------------------------------------
 */
 $isApi = is_api_request();
+
+if (!$isApi) {
+    require __DIR__ . '/bootstrap/session.php';
+}
 
 /*
 |--------------------------------------------------------------------------
@@ -55,9 +60,7 @@ $kernel->run($isApi);
 */
 require __DIR__ . '/bootstrap/container.php';
 
-if (!$isApi) {
-    require __DIR__ . '/bootstrap/session.php';
-}
+
 
 /*
 |--------------------------------------------------------------------------

@@ -1,5 +1,6 @@
 <?php
 
+use App\Systems\Session\AsyncSession;
 use App\Systems\Session\NativeSession;
 use App\Systems\Session\Session;
 
@@ -10,12 +11,8 @@ switch ($config['driver']) {
         $driver = new NativeSession($config);
         break;
 
-    case 'redis':
-        // $driver = new RedisSession($config);
-        break;
-
-    case 'swoole':
-        // $driver = new SwooleSession($config);
+    case 'revolt':
+        $driver = new AsyncSession($config);
         break;
 
     default:
@@ -23,3 +20,4 @@ switch ($config['driver']) {
 }
 
 Session::setDriver($driver);
+// when request complete use NullSession in your controller to avoid session blocking. Session::setDriver(new NullSession());

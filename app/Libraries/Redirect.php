@@ -43,7 +43,7 @@ class Redirect
 	public function redirect()
 	{
 		if (!empty($this->link)) {
-			if (isAjax()) {
+			if (is_ajax()) {
 				foreach ($this->message as $key => $value) {
 					echo $key.' = '.$value.'<br>';
 				}

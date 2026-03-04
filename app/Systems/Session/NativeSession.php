@@ -22,9 +22,9 @@ final class NativeSession implements SessionInterface
                 'use_strict_mode'   => 1,
                 'use_only_cookies'  => 1,
                 'cookie_httponly'   => true,
-                'cookie_secure'    => $this->config['secure'],
+                'cookie_secure'    => $this->config['secure'] && (!empty($_SERVER['HTTPS'])),
                 'cookie_samesite'  => $this->config['samesite'],
-                'gc_maxlifetime'   => $this->config['lifetime'],
+                // 'gc_maxlifetime'   => $this->config['lifetime'],
             ]);
         }
 
@@ -58,7 +58,28 @@ final class NativeSession implements SessionInterface
 
     public function destroy(): void
     {
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+            return;
+        }
+
         $_SESSION = [];
+
+        if (ini_get('session.use_cookies')) {
+            $params = session_get_cookie_params();
+            setcookie(
+                session_name(),
+                '',
+                [
+                    'expires'  => time() - 3600,
+                    'path'     => $params['path'],
+                    'domain'   => $params['domain'],
+                    'secure'   => $params['secure'],
+                    'httponly' => $params['httponly'],
+                    'samesite' => $params['samesite'] ?? 'Lax'
+                ]
+            );
+        }
+
         session_destroy();
     }
 }

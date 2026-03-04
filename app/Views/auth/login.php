@@ -1,7 +1,9 @@
 <?php ob_start(); ?>
 
 <h1><?= e($title) ?></h1>
-
+<?php 
+pr($_SESSION); 
+?>
 <form method="post" action="/login">
     <?= csrf_field() ?>
 
@@ -14,6 +16,14 @@
         Password
         <input type="password" name="password" required>
     </label>
+    <label>
+        Password Confirmation
+        <input type="password" name="password_confirmation" required>
+    </label>
+    <!-- remember -->
+    <label>
+        <input type="checkbox" name="remember">
+        Remember Me
 
     <button type="submit">Login</button>
 </form>

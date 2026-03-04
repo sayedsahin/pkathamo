@@ -15,7 +15,7 @@ class Container
     /**
      * Bind a class or key
      */
-    public function bind(string $abstract, Closure|string $concrete = null): void
+    public function bind(string $abstract, Closure|string|null $concrete = null): void
     {
         $this->bindings[$abstract] = $concrete ?? $abstract;
     }
@@ -23,7 +23,7 @@ class Container
     /**
      * Bind as singleton (high performance)
      */
-    public function singleton(string $abstract, Closure|string $concrete = null): void
+    public function singleton(string $abstract, Closure|string|null $concrete = null): void
     {
         $this->singletons[$abstract] = [
             'concrete' => $concrete ?? $abstract,

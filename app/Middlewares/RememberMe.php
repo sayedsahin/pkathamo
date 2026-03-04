@@ -30,6 +30,11 @@ final class RememberMe implements MiddlewareInterface
             Cookie::forget('remember_token');
             return;
         }
+        
+        if ($row->user_agent !== $_SERVER['HTTP_USER_AGENT']) {
+            Cookie::forget('remember_token');
+            return;
+        }
 
         Session::regenerate();
         Session::set('user_id', $row->user_id);

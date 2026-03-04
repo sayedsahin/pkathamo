@@ -2,20 +2,22 @@
 
 namespace App\Systems;
 
+use App\Systems\Session\Session;
+
 class Role{
 
 	public static function guest()
 	{
-		Session::init();
-		if (Session::get('login') === true) {
+		// Session::init();
+		if (Session::get('user_id')) {
 			header('Location:'.BASE_URL);
 			exit;
 		}
 	}
 	public static function auth()
 	{
-		Session::init();
-		if (Session::get('login') === false) {
+		// Session::init();
+		if (!Session::get('user_id')) {
 			if (isset($_COOKIE['token'])) {
 				$session = Cookie::reSetSession();
 				if ($session) {
@@ -23,7 +25,7 @@ class Role{
 				}
 			}
 			Session::destroy();
-			if (!isAjax()) {
+			if (!is_ajax()) {
 				return redirect('/login')->with(['error' => 'you must be login']);
 			}else{
 				echo 'login';

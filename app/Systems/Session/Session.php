@@ -18,6 +18,11 @@ final class Session
         return self::$driver;
     }
 
+    public static function replace(SessionInterface $driver): void
+    {
+        self::$driver = $driver;
+    }
+
     public static function start(): void
     {
         self::driver()->start();
