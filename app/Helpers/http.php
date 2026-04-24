@@ -1,6 +1,37 @@
 <?php
 
 use App\Systems\Session;
+use App\Http\Request;
+use App\Http\Response;
+use App\Http\JsonResponse;
+
+if (!function_exists('request')) {
+    function request(): Request
+    {
+        static $req;
+
+        if (! $req) {
+            $req = Request::capture();
+        }
+
+        return $req;
+    }
+}
+
+if (!function_exists('response')) {
+    function response(string $content = '', int $status = 200): Response
+    {
+        return new Response($content, $status);
+    }
+}
+
+if (!function_exists('json')) {
+    function json(array $data, int $status = 200): JsonResponse
+    {
+        return new JsonResponse($data, $status);
+    }
+}
+
 
 if (!function_exists('flash')) {
 	function flash($msg, $link='') {

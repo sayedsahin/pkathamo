@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 /*
 |--------------------------------------------------------------------------
@@ -27,6 +28,8 @@ if (is_file(__DIR__ . '/storage/cache/env.php')) {
 */
 require __DIR__ . '/config/config.php';
 
+// request remove starting for async
+// App\Supports\RequestContext::clear();
 
 /*
 |--------------------------------------------------------------------------
@@ -68,3 +71,8 @@ require __DIR__ . '/bootstrap/container.php';
 |--------------------------------------------------------------------------
 */
 require __DIR__ . '/app/Systems/FastRoute.php';
+
+
+
+// request remove after ending
+// App\Supports\RequestContext::clear();

@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace App\Controllers;
 
@@ -51,8 +53,10 @@ class AuthController extends Controller
 		// $errors = [];
 		verify_csrf();
 		// Validation way 1: Using Try-Catch
+
+		$request = request();
 		try {
-			$data = Validator::make($_POST)
+			$data = Validator::make($request->all())
 				->bail()
 				->required(['email', 'password'])
 				->nullable(['first_name', 'last_name', 'remember'])
@@ -61,18 +65,18 @@ class AuthController extends Controller
 				->min('password', 8)
 				->confirmed('password')
 				->validated();
-				// ✅ VALID DATA
-				// $data['email']
-				// $data['password']
+			// ✅ VALID DATA
+			// $data['email']
+			// $data['password']
 
-				// dd($data);
+			// dd($data);
 		} catch (\App\Validation\ValidationException $e) {
 			$errors = $e->errors();
 			// dd($errors);
 		}
 
 		// Validation way 2: Using Input Class with Method Chaining
-		// $validator = Validator::make($_POST)
+		// $validator = Validator::make($request->all())
 		// 	->required(['email', 'password'])
 		// 	->email('email')
 		// 	->min('password', 8);
@@ -140,6 +144,7 @@ class AuthController extends Controller
 		// Session::set("email", $user->email);
 		// Session::set("role", (int) $user->role_id);
 		return redirect();
+		// return json(['ok' => true], 200);
 	}
 
 	public function registration()
@@ -166,7 +171,7 @@ class AuthController extends Controller
 		$input->post('password')->required()->length(4, 20);
 		$input->post('confirm_password')->required();
 
-		if (!$input->submit()){
+		if (!$input->submit()) {
 			return redirect()->back()->with(['errors' => $input->errors]);
 		}
 
@@ -191,7 +196,7 @@ class AuthController extends Controller
 		}
 
 		unset($input->values['confirm_password']);
-		
+
 		$input->values['password'] = $password = password_hash($input->values['password'], PASSWORD_DEFAULT);
 
 		$user_id = $this->model->table('users')->insert($input->values, true);
@@ -238,15 +243,15 @@ class AuthController extends Controller
 	}
 
 	public function getUserIP()
-    {
-        if (!empty($_SERVER['HTTP_CLIENT_IP'])) {
-            $ip = $_SERVER['HTTP_CLIENT_IP'];
-        } elseif (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+	{
+		if (!empty($_SERVER['HTTP_CLIENT_IP'])) {
+			$ip = $_SERVER['HTTP_CLIENT_IP'];
+		} elseif (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
 
-            $ip = $_SERVER['HTTP_X_FORWARDED_FOR'];
-        } else {
-            $ip = $_SERVER['REMOTE_ADDR'];
-        }
-        return $ip;
-    }
+			$ip = $_SERVER['HTTP_X_FORWARDED_FOR'];
+		} else {
+			$ip = $_SERVER['REMOTE_ADDR'];
+		}
+		return $ip;
+	}
 }
