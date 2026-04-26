@@ -1,6 +1,8 @@
 <?php
 
-namespace App\Systems\Session;
+namespace App\Systems\Session\Drivers;
+
+use App\Systems\Session\SessionInterface;
 
 final class AsyncSession implements SessionInterface
 {

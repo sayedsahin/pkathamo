@@ -6,11 +6,13 @@ namespace App\Controllers;
 
 use App\Libraries\Form;
 use App\Models\DB;
+use App\Supports\Auth;
 use App\Systems\QueryBuilder;
 use App\Systems\Session\Cookie;
 use App\Systems\Role;
 use App\Systems\Session\RememberToken;
 use App\Systems\Session\Session;
+use App\Systems\SetCookie;
 use App\Validation\Validator;
 
 class AuthController extends Controller
@@ -26,7 +28,12 @@ class AuthController extends Controller
 
 	public function index()
 	{
-		echo 123;
+		$result['users'] = db()->table('users')->get();
+		$result['tokens'] = db()->table('remember_tokens')->get();
+		pr($result);
+		return;
+		$auth = Auth::user();
+		echo pr($auth);
 		return;
 		phpinfo();
 		return;
@@ -38,7 +45,7 @@ class AuthController extends Controller
 	{
 		Role::guest();
 		if (isset($_COOKIE['token'])) {
-			$session = Cookie::reSetSession();
+			$session = SetCookie::reSetSession();
 			if ($session) {
 				return redirect();
 			}
@@ -151,7 +158,7 @@ class AuthController extends Controller
 	{
 		Role::guest();
 		if (isset($_COOKIE['token'])) {
-			$session = Cookie::reSetSession();
+			$session = SetCookie::reSetSession();
 			if ($session) {
 				return redirect();
 			}
@@ -234,7 +241,7 @@ class AuthController extends Controller
 	{
 		Role::guest();
 		if (isset($_COOKIE['token'])) {
-			$session = Cookie::reSetSession();
+			$session = SetCookie::reSetSession();
 			if ($session) {
 				return redirect();
 			}

@@ -433,4 +433,28 @@ class QueryBuilder
         $this->bindings = [];
         $this->paramCounter = 0;
     }
+
+    public function pluck(string $column): array
+    {
+        $this->select($column);
+
+        $rows = $this->get();
+
+        $result = [];
+
+        foreach ($rows as $row) {
+            $result[] = $row->{$column};
+        }
+
+        return $result;
+    }
+
+    public function value(string $column): mixed
+    {
+        $this->select($column)->limit(1);
+
+        $row = $this->first();
+
+        return $row ? ($row->{$column} ?? null) : null;
+    }
 }

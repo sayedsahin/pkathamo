@@ -1,7 +1,7 @@
 <?php
 
-use App\Systems\Session\AsyncSession;
-use App\Systems\Session\NativeSession;
+use App\Systems\Session\Drivers\AsyncSession;
+use App\Systems\Session\Drivers\NativeSession;
 use App\Systems\Session\Session;
 
 $config = require __DIR__ . '/../config/session.php';

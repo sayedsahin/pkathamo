@@ -2,7 +2,10 @@
 
 namespace App\Systems;
 
-class Cookie{
+use App\Systems\Session\Session;
+
+// will be modify or delete later
+class SetCookie{
 
 	public static function reSetSession()
 	{
