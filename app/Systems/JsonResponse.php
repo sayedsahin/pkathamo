@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Http;
+namespace App\Systems;
 
 final class JsonResponse extends Response
 {

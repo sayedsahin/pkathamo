@@ -1,9 +1,10 @@
 <?php
 
-use App\Systems\Session;
-use App\Http\Request;
-use App\Http\Response;
-use App\Http\JsonResponse;
+use App\Supports\Redirect;
+use App\Systems\Session\Session;
+use App\Systems\Request;
+use App\Systems\Response;
+use App\Systems\JsonResponse;
 
 if (!function_exists('request')) {
     function request(): Request
@@ -105,7 +106,7 @@ if (!function_exists('message')) {
 
 if (!function_exists('redirect')) {
 	function redirect(string $link='') {
-		return new \App\Libraries\Redirect($link);
+		return new Redirect($link);
 	}
 }
 

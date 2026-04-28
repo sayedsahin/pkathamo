@@ -1,0 +1,211 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Controllers;
+
+use App\Supports\Auth;
+use App\Supports\Role;
+use App\Validation\Validator;
+
+class ApiAuthController extends Controller
+{
+    public function __construct()
+    {
+        // API routes use BearerAuth middleware from config/middleware.php
+    }
+
+    public function login()
+    {
+        $request = request();
+
+        try {
+            $data = Validator::make($request->all())
+                ->required(['email', 'password'])
+                ->email('email')
+                ->validated();
+        } catch (\App\Validation\ValidationException $e) {
+            return json(['errors' => $e->errors()], 422);
+        }
+
+        $user = db()->table('users')
+            ->where('email', $data['email'])
+            ->first();
+
+        if (!$user || !password_verify($data['password'], $user->password)) {
+            return json(['error' => 'Invalid credentials'], 401);
+        }
+
+        if (!($user->email_verified ?? 1)) {
+            return json(['error' => 'Email not verified'], 403);
+        }
+
+        // Generate API token
+        $token = bin2hex(random_bytes(40));
+        db()->table('api_tokens')->insert([
+            'user_id' => $user->id,
+            'token' => hash('sha256', $token),
+            'expires_at' => date('Y-m-d H:i:s', time() + 86400 * 30), // 30 days
+            'created_at' => date('Y-m-d H:i:s'),
+        ]);
+
+        return json([
+            'token' => $token,
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'roles' => Role::userRoles($user->id)
+            ]
+        ], 200);
+    }
+
+    public function register()
+    {
+        $request = request();
+
+        try {
+            $data = Validator::make($request->all())
+                ->required(['name', 'username', 'email', 'password', 'password_confirmation'])
+                ->string(['name', 'username', 'email', 'password', 'password_confirmation'])
+                ->email('email')
+                ->confirmed('password')
+                ->validated();
+        } catch (\App\Validation\ValidationException $e) {
+            return json(['errors' => $e->errors()], 422);
+        }
+
+        if ($data['password'] !== $data['password_confirmation']) {
+            return json(['error' => 'Password confirmation does not match'], 422);
+        }
+
+        // Check existing user
+        $existing = db()->table('users')
+            ->where('username', $data['username'])
+            ->orWhere('email', $data['email'])
+            ->first();
+
+        if ($existing) {
+            $error = $existing->username === $data['username'] ? 'Username already exists' : 'Email already exists';
+            return json(['error' => $error], 422);
+        }
+
+        // Create user
+        $userData = [
+            'name' => $data['name'],
+            'username' => $data['username'],
+            'email' => $data['email'],
+            'password' => password_hash($data['password'], PASSWORD_DEFAULT),
+            'verification_token' => bin2hex(random_bytes(32)),
+            'email_verified' => 0,
+            'created_at' => date('Y-m-d H:i:s')
+        ];
+
+        $userId = db()->table('users')->insert($userData, true);
+
+        if (!$userId) {
+            return json(['error' => 'Registration failed'], 500);
+        }
+
+        // Assign default role
+        Role::assign($userId, 'user');
+
+        // Send verification email (placeholder)
+        // mail($data['email'], 'Verify Email', 'Token: ' . $userData['verification_token']);
+
+        return json([
+            'message' => 'Registration successful. Please verify your email.',
+            'verification_token' => $userData['verification_token'] // For testing
+        ], 201);
+    }
+
+    public function forgot()
+    {
+        $request = request();
+
+        try {
+            $data = Validator::make($request->all())
+                ->required(['email'])
+                ->email('email')
+                ->validated();
+        } catch (\App\Validation\ValidationException $e) {
+            return json(['errors' => $e->errors()], 422);
+        }
+
+        $user = db()->table('users')->where('email', $data['email'])->first();
+
+        if (!$user) {
+            return json(['error' => 'Email not found'], 404);
+        }
+
+        $resetToken = bin2hex(random_bytes(32));
+        db()->table('users')->where('id', $user->id)->update([
+            'reset_token' => $resetToken,
+            'reset_expires' => date('Y-m-d H:i:s', time() + 3600) // 1 hour
+        ]);
+
+        // Send reset email (placeholder)
+        // mail($data['email'], 'Reset Password', 'Token: ' . $resetToken);
+
+        return json([
+            'message' => 'Reset link sent to email',
+            'reset_token' => $resetToken // For testing
+        ], 200);
+    }
+
+    public function verify($token)
+    {
+        $user = db()->table('users')->where('verification_token', $token)->first();
+
+        if (!$user) {
+            return json(['error' => 'Invalid verification token'], 400);
+        }
+
+        db()->table('users')->where('id', $user->id)->update([
+            'email_verified' => 1,
+            'verification_token' => null
+        ]);
+
+        return json(['message' => 'Email verified successfully'], 200);
+    }
+
+    public function logout()
+    {
+        $header = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
+
+        if (!str_starts_with($header, 'Bearer ')) {
+            return json(['error' => 'Unauthorized'], 401);
+        }
+
+        $token = substr($header, 7);
+        $hashedToken = hash('sha256', $token);
+
+        $deleted = db()->table('api_tokens')
+            ->where('token', $hashedToken)
+            ->delete();
+
+        if ($deleted) {
+            return json(['message' => 'Logged out successfully'], 200);
+        }
+
+        return json(['error' => 'Invalid token'], 401);
+    }
+
+    // Optional: Get current user profile
+    public function profile()
+    {
+        $user = Auth::user();
+        if (!$user) {
+            return json(['error' => 'Unauthorized'], 401);
+        }
+
+        return json([
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'roles' => Role::userRoles($user->id)
+            ]
+        ], 200);
+    }
+}

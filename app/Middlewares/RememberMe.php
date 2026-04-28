@@ -5,14 +5,13 @@ namespace App\Middlewares;
 use App\Systems\Session\Session;
 use App\Systems\Session\RememberToken;
 use App\Systems\Session\Cookie;
-use App\Models\DB;
 use App\Supports\Auth;
 
 final class RememberMe implements MiddlewareInterface
 {
     public function handle(): void
     {
-        if (Session::get('user_id')) {
+        if (Session::get('auth_user_id')) {
             return;
         }
 
@@ -22,8 +21,7 @@ final class RememberMe implements MiddlewareInterface
         }
 
         $hash = hash('sha256', $raw);
-        $db = new DB();
-        $row = $db->table('remember_tokens')
+        $row = db()->table('remember_tokens')
             ->where('token_hash', $hash)
             ->where('expires_at', '>', date('Y-m-d H:i:s'))
             ->first();
@@ -39,13 +37,13 @@ final class RememberMe implements MiddlewareInterface
         }
 
         Session::regenerate();
-        Session::set('user_id', $row->user_id);
+        Session::set('auth_user_id', $row->user_id);
         Auth::setViaRemember(true);
 
         // Rotate token
         $new = RememberToken::generate();
 
-        $db->table('remember_tokens')->where('id', $row->id)->update([
+        db()->table('remember_tokens')->where('id', $row->id)->update([
             'token_hash' => $new['hash'],
         ]);
 

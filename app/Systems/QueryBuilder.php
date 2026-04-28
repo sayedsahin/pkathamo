@@ -436,14 +436,17 @@ class QueryBuilder
 
     public function pluck(string $column): array
     {
-        $this->select($column);
+        // Handle qualified column names (e.g., 'roles.name')
+        $alias = str_contains($column, '.')
+            ? str_replace('.', '_', $column)
+            : $column;
+        $this->select("$column as $alias");
 
         $rows = $this->get();
-
         $result = [];
 
         foreach ($rows as $row) {
-            $result[] = $row->{$column};
+            $result[] = $row->{$alias};  // Use alias instead
         }
 
         return $result;
@@ -451,7 +454,7 @@ class QueryBuilder
 
     public function value(string $column): mixed
     {
-        $this->select($column)->limit(1);
+        $this->select($column);
 
         $row = $this->first();
 

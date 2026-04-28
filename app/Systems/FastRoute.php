@@ -36,11 +36,16 @@
 	        $handler = $routeInfo[1];
 	        $vars = $routeInfo[2];
 
+			$middlewares = $handler[2] ?? [];
+			// run middleware
+			foreach ($middlewares as $middleware) {
+				(new $middleware())->handle();
+			}
+
 	        global $container;
 	        $controller = $container->make($handler[0]);
 	        // call_user_func_array([$controller, $handler[1]], $vars);
 			$action = $handler[1];
 			$controller->$action(...array_values($vars));
-			
 	        break;
 	}

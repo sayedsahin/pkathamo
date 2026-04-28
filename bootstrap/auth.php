@@ -1,9 +1,10 @@
 <?php
 
-use App\Models\User;
 use App\Supports\Auth;
 
 Auth::setResolver(function (int $id) {
-    $user = new User();
-    return $user->find($id);
+    return db()
+    ->table('users')
+    ->select('id', 'name', 'email', 'username')
+    ->find($id);
 });

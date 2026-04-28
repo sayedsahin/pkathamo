@@ -1,30 +1,36 @@
-<?php ob_start(); ?>
+<?php
 
-<h1><?= e($title) ?></h1>
+use App\Supports\Auth;
+use App\Systems\Session\Session;
+
+ ob_start(); ?>
+
+<h2><?= e($title) ?></h2>
 <?php 
-pr($_SESSION); 
+pr($_SESSION);
+Auth::user();
 ?>
 <form method="post" action="/login">
     <?= csrf_field() ?>
-
-    <label>
-        Email
-        <input type="email" name="email" required>
-    </label>
-
-    <label>
-        Password
-        <input type="password" name="password" required>
-    </label>
-    <label>
-        Password Confirmation
-        <input type="password" name="password_confirmation" required>
-    </label>
+    <p>
+        <label>
+            Email
+        </label><br>
+            <input type="email" name="email" required>
+    </p>
+    <p>
+        <label>
+            Password
+        </label><br>
+            <input type="password" name="password" required>
+    </p>
     <!-- remember -->
-    <label>
-        <input type="checkbox" name="remember">
-        Remember Me
-
+    <div>
+        <label>
+            Remember Me
+        </label>
+            <input type="checkbox" name="remember">
+    </div><br>
     <button type="submit">Login</button>
 </form>
 
