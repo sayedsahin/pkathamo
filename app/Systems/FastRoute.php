@@ -2,9 +2,9 @@
 	// Source: https://github.com/nikic/FastRoute
 
 	$dispatcher = FastRoute\cachedDispatcher(function(FastRoute\RouteCollector $route) {
-	    require_once 'config/routes.php';
+	    require_once ROOT_PATH . '/config/routes.php';
 	}, [
-	    'cacheFile' => 'storage/cache/route.cache', /* required */
+	    'cacheFile' => ROOT_PATH . '/storage/cache/route.cache', /* required */
 	    'cacheDisabled' => DEBUG_MODE,     /* optional, enabled by default */
 	]);
 

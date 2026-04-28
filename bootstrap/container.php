@@ -2,7 +2,7 @@
 
 use App\Systems\Container;
 
-$config = require __DIR__ . '/../config/container.php';
+$config = require ROOT_PATH . '/config/container.php';
 
 $container = new Container();
 

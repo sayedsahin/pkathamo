@@ -5,7 +5,7 @@ use App\Systems\Cache\Drivers\RedisCache;
 use App\Systems\Cache\Drivers\ArrayCache;
 use App\Systems\Cache\Drivers\FileCache;
 
-$config = require __DIR__ . '/../config/cache.php';
+$config = require ROOT_PATH . '/config/cache.php';
 
 $driver = match ($config['driver']) {
     'array' => new ArrayCache(),
