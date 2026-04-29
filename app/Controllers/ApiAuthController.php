@@ -25,7 +25,7 @@ class ApiAuthController extends Controller
                 ->email('email')
                 ->validated();
         } catch (\App\Validation\ValidationException $e) {
-            return json(['errors' => $e->errors()], 422);
+            return response()->json(['errors' => $e->errors()], 422);
         }
 
         $user = db()->table('users')
@@ -33,11 +33,11 @@ class ApiAuthController extends Controller
             ->first();
 
         if (!$user || !password_verify($data['password'], $user->password)) {
-            return json(['error' => 'Invalid credentials'], 401);
+            return response()->json(['error' => 'Invalid credentials'], 401);
         }
 
         if (!($user->email_verified ?? 1)) {
-            return json(['error' => 'Email not verified'], 403);
+            return response()->json(['error' => 'Email not verified'], 403);
         }
 
         // Generate API token
@@ -49,7 +49,7 @@ class ApiAuthController extends Controller
             'created_at' => date('Y-m-d H:i:s'),
         ]);
 
-        return json([
+        return response()->json([
             'token' => $token,
             'user' => [
                 'id' => $user->id,
@@ -72,11 +72,11 @@ class ApiAuthController extends Controller
                 ->confirmed('password')
                 ->validated();
         } catch (\App\Validation\ValidationException $e) {
-            return json(['errors' => $e->errors()], 422);
+            return response()->json(['errors' => $e->errors()], 422);
         }
 
         if ($data['password'] !== $data['password_confirmation']) {
-            return json(['error' => 'Password confirmation does not match'], 422);
+            return response()->json(['error' => 'Password confirmation does not match'], 422);
         }
 
         // Check existing user
@@ -87,7 +87,7 @@ class ApiAuthController extends Controller
 
         if ($existing) {
             $error = $existing->username === $data['username'] ? 'Username already exists' : 'Email already exists';
-            return json(['error' => $error], 422);
+            return response()->json(['error' => $error], 422);
         }
 
         // Create user
@@ -104,7 +104,7 @@ class ApiAuthController extends Controller
         $userId = db()->table('users')->insert($userData, true);
 
         if (!$userId) {
-            return json(['error' => 'Registration failed'], 500);
+            return response()->json(['error' => 'Registration failed'], 500);
         }
 
         // Assign default role
@@ -113,7 +113,7 @@ class ApiAuthController extends Controller
         // Send verification email (placeholder)
         // mail($data['email'], 'Verify Email', 'Token: ' . $userData['verification_token']);
 
-        return json([
+        return response()->json([
             'message' => 'Registration successful. Please verify your email.',
             'verification_token' => $userData['verification_token'] // For testing
         ], 201);
@@ -129,13 +129,13 @@ class ApiAuthController extends Controller
                 ->email('email')
                 ->validated();
         } catch (\App\Validation\ValidationException $e) {
-            return json(['errors' => $e->errors()], 422);
+            return response()->json(['errors' => $e->errors()], 422);
         }
 
         $user = db()->table('users')->where('email', $data['email'])->first();
 
         if (!$user) {
-            return json(['error' => 'Email not found'], 404);
+            return response()->json(['error' => 'Email not found'], 404);
         }
 
         $resetToken = bin2hex(random_bytes(32));
@@ -147,7 +147,7 @@ class ApiAuthController extends Controller
         // Send reset email (placeholder)
         // mail($data['email'], 'Reset Password', 'Token: ' . $resetToken);
 
-        return json([
+        return response()->json([
             'message' => 'Reset link sent to email',
             'reset_token' => $resetToken // For testing
         ], 200);
@@ -158,7 +158,7 @@ class ApiAuthController extends Controller
         $user = db()->table('users')->where('verification_token', $token)->first();
 
         if (!$user) {
-            return json(['error' => 'Invalid verification token'], 400);
+            return response()->json(['error' => 'Invalid verification token'], 400);
         }
 
         db()->table('users')->where('id', $user->id)->update([
@@ -166,7 +166,7 @@ class ApiAuthController extends Controller
             'verification_token' => null
         ]);
 
-        return json(['message' => 'Email verified successfully'], 200);
+        return response()->json(['message' => 'Email verified successfully'], 200);
     }
 
     public function logout()
@@ -174,7 +174,7 @@ class ApiAuthController extends Controller
         $header = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
 
         if (!str_starts_with($header, 'Bearer ')) {
-            return json(['error' => 'Unauthorized'], 401);
+            return response()->json(['error' => 'Unauthorized'], 401);
         }
 
         $token = substr($header, 7);
@@ -185,10 +185,10 @@ class ApiAuthController extends Controller
             ->delete();
 
         if ($deleted) {
-            return json(['message' => 'Logged out successfully'], 200);
+            return response()->json(['message' => 'Logged out successfully'], 200);
         }
 
-        return json(['error' => 'Invalid token'], 401);
+        return response()->json(['error' => 'Invalid token'], 401);
     }
 
     // Optional: Get current user profile
@@ -196,10 +196,10 @@ class ApiAuthController extends Controller
     {
         $user = Auth::user();
         if (!$user) {
-            return json(['error' => 'Unauthorized'], 401);
+            return response()->json(['error' => 'Unauthorized'], 401);
         }
 
-        return json([
+        return response()->json([
             'user' => [
                 'id' => $user->id,
                 'name' => $user->name,

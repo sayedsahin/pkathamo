@@ -25,7 +25,6 @@ class AuthController extends Controller
 
 	public function login()
 	{
-		$this->middleware(Guest::class);
 		return view('auth.login', ['title' => 'Login']);
 	}
 
@@ -94,7 +93,7 @@ class AuthController extends Controller
 			);
 		}
 		
-		return redirect();
+		return redirect()->back()->with(['success' => 'Login Successful']);
 		// return json(['ok' => true], 200);
 	}
 

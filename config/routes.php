@@ -8,7 +8,7 @@ use App\Middlewares\Guest;
 // Example-Router: $route->get('/', ['ClassName::class', 'method', [Middleware::class]]);
 
 $route->get('/', [HomeController::class, 'index']);
-$route->get('/login', [AuthController::class, 'login', [Guest::class]]);
+$route->get('/login', [AuthController::class, 'login']);
 $route->post('/login', [AuthController::class, 'loginProcess']);
 $route->get('/register', [AuthController::class, 'registration']);
 $route->post('/register', [AuthController::class, 'registrationProcess']);

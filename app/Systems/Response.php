@@ -26,6 +26,15 @@ class Response
         return $this;
     }
 
+    // response json
+    public function json($data, int $status = 200): self
+    {
+        $this->content = json_encode($data);
+        $this->status = $status;
+        $this->header('Content-Type', 'application/json');
+        return $this;
+    }
+
     /* -----------------------
        Getters for Async Support
     ----------------------- */

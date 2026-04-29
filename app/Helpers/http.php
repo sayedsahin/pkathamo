@@ -1,60 +1,53 @@
 <?php
 
-use App\Supports\Redirect;
+use App\Systems\Redirect;
 use App\Systems\Session\Session;
 use App\Systems\Request;
 use App\Systems\Response;
-use App\Systems\JsonResponse;
 
 if (!function_exists('request')) {
-    function request(): Request
-    {
-        static $req;
+	function request(): Request
+	{
+		static $req;
 
-        if (! $req) {
-            $req = Request::capture();
-        }
+		if (! $req) {
+			$req = Request::capture();
+		}
 
-        return $req;
-    }
+		return $req;
+	}
 }
 
 if (!function_exists('response')) {
-    function response(string $content = '', int $status = 200): Response
-    {
-        return new Response($content, $status);
-    }
-}
-
-if (!function_exists('json')) {
-    function json(array $data, int $status = 200): JsonResponse
-    {
-        return new JsonResponse($data, $status);
-    }
+	function response(string $content = '', int $status = 200): Response
+	{
+		return new Response($content, $status);
+	}
 }
 
 
 if (!function_exists('flash')) {
-	function flash($msg, $link='') {
+	function flash($msg, $link = '')
+	{
 		$fullMsg = "";
 		if (is_array($msg)) {
 			$fullMsg .= '<p class="alert alert-danger d-inline-block">';
 			foreach ($msg as $key => $value) {
-				$fullMsg .= "* ".$value." (".$key.")<br>";
+				$fullMsg .= "* " . $value . " (" . $key . ")<br>";
 			}
 			$fullMsg .= '</p>';
-		}else{
-			$color = (strpos($msg, '!') != false) ? 'danger' : 'success' ;
-			$fullMsg .= '<p class="alert alert-'.$color.' d-inline-block">'.$msg.'</p>';
+		} else {
+			$color = (strpos($msg, '!') != false) ? 'danger' : 'success';
+			$fullMsg .= '<p class="alert alert-' . $color . ' d-inline-block">' . $msg . '</p>';
 		}
 
 		if (isset($_POST['ajax']) || isset($_GET['ajax'])) {
 			echo $fullMsg;
-		}else{
+		} else {
 			Session::set("msg", $fullMsg);
 			if (!empty($link)) {
-				header("Location: ".BASE_URL.$link);
-			}else{
+				header("Location: " . BASE_URL . $link);
+			} else {
 				back();
 			}
 		}
@@ -63,58 +56,59 @@ if (!function_exists('flash')) {
 
 
 if (!function_exists('back')) {
-	function back() {
+	function back()
+	{
 		if (isset($_SERVER['HTTP_REFERER'])) {
 			$url = $_SERVER['HTTP_REFERER'];
 			$host = parse_url($url, PHP_URL_HOST);
 			$base = parse_url(BASE_URL, PHP_URL_HOST);
 			if ($host == $base) {
 				Session::set("link", $url);
-			}else{
+			} else {
 				Session::set("link", BASE_URL);
 			}
-
-		}else{
+		} else {
 			Session::set("link", BASE_URL);
 		}
-		header("Location:".Session::get("link"));
+		header("Location:" . Session::get("link"));
 	}
 }
 
-if (!function_exists('message')) {
-	function message()
+if (!function_exists('show_flash')) {
+	function show_flash()
 	{
-		if (!empty($_SESSION['message'])) {
-			$msg = Session::get("message");
+		if (!empty($_SESSION['flash'])) {
+			$msg = Session::get("flash");
 			if (!empty($msg['errors'])) {
 				echo "<div class='alert alert-danger'>";
 				foreach ($msg as $key => $value) {
 					foreach ($value as $k => $val) {
-						echo "* ".$val." (".$k.")<br>";
+						echo "* " . $val . " (" . $k . ")<br>";
 					}
 				}
 				echo "</div>";
-			}elseif(!empty($msg['error'])) {
-				echo "<div class='alert alert-danger'>".$msg['error']."</div>";
-			}else {
-				echo "<div class='alert alert-success'>".$msg['success']."</div>";
+			} elseif (!empty($msg['error'])) {
+				echo "<div class='alert alert-danger'>" . $msg['error'] . "</div>";
+			} else {
+				echo "<div class='alert alert-success'>" . $msg['success'] . "</div>";
 			}
-			unset($_SESSION['message']);
+			unset($_SESSION['flash']);
 		}
 	}
 }
 
 if (!function_exists('redirect')) {
-	function redirect(string $link='') {
+	function redirect(string $link = '')
+	{
 		return new Redirect($link);
 	}
 }
 
-function is_ajax() : bool
+function is_ajax(): bool
 {
-	if(!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+	if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
 		return true;
-	}else{
+	} else {
 		return false;
 	}
 }
@@ -143,18 +137,18 @@ function is_ajax() : bool
 
 function is_api_request(): bool
 {
-    $uri = $_SERVER['REQUEST_URI'] ?? '';
+	$uri = $_SERVER['REQUEST_URI'] ?? '';
 
-    if (str_starts_with($uri, '/api')) {
-        return true;
-    }
+	if (str_starts_with($uri, '/api')) {
+		return true;
+	}
 
-    $accept = $_SERVER['HTTP_ACCEPT'] ?? '';
+	$accept = $_SERVER['HTTP_ACCEPT'] ?? '';
 
-    // API clients usually explicitly prefer JSON
-    if ($accept === 'application/json' || str_starts_with($accept, 'application/json')) {
-        return true;
-    }
+	// API clients usually explicitly prefer JSON
+	if ($accept === 'application/json' || str_starts_with($accept, 'application/json')) {
+		return true;
+	}
 
-    return false;
+	return false;
 }

@@ -4,6 +4,7 @@ use App\Models\DB;
 use App\Supports\RequestContext;
 use App\Supports\Role;
 use App\Systems\Cache\Cache;
+use App\Systems\Session\Session;
 
 if (!function_exists('cache')) {
     function cache(): Cache
@@ -41,3 +42,22 @@ if (!function_exists('roles')) {
         return Role::any($roles);
     }
 }
+
+if (!function_exists('session')) {
+    function session()
+    {
+        static $proxy = null;
+
+        if ($proxy === null) {
+            $proxy = new class {
+                public function __call($method, $args)
+                {
+                    return Session::$method(...$args);
+                }
+            };
+        }
+
+        return $proxy;
+    }
+}
+

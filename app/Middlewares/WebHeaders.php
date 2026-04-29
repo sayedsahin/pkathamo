@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Middlewares;
 
 class WebHeaders implements MiddlewareInterface
@@ -11,10 +12,11 @@ class WebHeaders implements MiddlewareInterface
 
         header(
             "Content-Security-Policy: " .
-            "default-src 'self'; " .
-            "script-src 'self'; " .
-            "style-src 'self' 'unsafe-inline'; " .
-            "img-src 'self' data:;"
+                "default-src 'self'; " .
+                "script-src 'self' https://cdn.jsdelivr.net; " .
+                "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; " .
+                "img-src 'self' data:; " .
+                "connect-src 'self' https://cdn.jsdelivr.net;"
         );
     }
 }

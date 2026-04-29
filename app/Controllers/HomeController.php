@@ -9,21 +9,16 @@ use App\Supports\Role;
 // Home Controller for testing purpose only
 class HomeController extends Controller
 {
-    public function index()
-    {
-		$this->middleware(Authenticated::class);
-		pr($user = Auth::user());
-		pr(Role::userRoles($user->id));
-        $result['users'] = db()->table('users')->get();
-		$result['tokens'] = db()->table('remember_tokens')->get();
-		pr($result);
-		return;
-		$auth = Auth::user();
-		echo pr($auth);
-		return;
-		phpinfo();
-		return;
-		$users = $this->model->table('users')->get();
-		pr($users);
-    }
+	public function index()
+	{
+		// echo session()->get('auth_user_id');
+		// return redirect('/login')->with(['error' => 'Unauthorized']);
+		// $this->middleware(Authenticated::class);
+
+		$user = Auth::user();
+		$users = db()->table('users')->get();
+		return response()->json($users);
+		// return response($users, 200);
+		// return view('home', ['title' => 'Home']);
+	}
 }

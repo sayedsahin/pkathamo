@@ -46,6 +46,17 @@
 	        $controller = $container->make($handler[0]);
 	        // call_user_func_array([$controller, $handler[1]], $vars);
 			$action = $handler[1];
-			$controller->$action(...array_values($vars));
+			$result = $controller->$action(...array_values($vars));
+
+
+			// Convert Redirect objects to Response objects
+			if ($result instanceof \App\Systems\Redirect) {
+				$result = $result->toResponse();
+			}
+
+			// Handle Response objects
+			if ($result instanceof \App\Systems\Response) {
+				$result->send();
+			}
 	        break;
 	}
