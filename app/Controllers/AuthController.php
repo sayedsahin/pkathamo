@@ -9,6 +9,7 @@ use App\Middlewares\Authenticated;
 use App\Middlewares\Guest;
 use App\Supports\Auth;
 use App\Supports\Role;
+use App\Systems\Redirect;
 use App\Systems\Session\Cookie;
 use App\Systems\Session\RememberToken;
 use App\Systems\Session\Session;
@@ -25,12 +26,12 @@ class AuthController extends Controller
 
 	public function login()
 	{
-		return view('auth.login', ['title' => 'Login']);
+		return view('auth.login2', ['title' => 'Login']);
 	}
 
 	public function loginProcess()
 	{
-		verify_csrf();
+		// verify_csrf(); // CSRF verification is handled by the Csrf middleware globally, so no need to call it here.
 
 		/*
 		|-----------------------------------------------------------
@@ -55,7 +56,7 @@ class AuthController extends Controller
 			// dd($data);
 		} catch (\App\Validation\ValidationException $e) {
 			$errors = $e->errors();
-			return redirect()->back()->with(['errors' => $errors]);
+			return redirect()->back()->with(['errors' => $errors])->send();
 		}
 
 		$email = $data['email'];
@@ -66,7 +67,7 @@ class AuthController extends Controller
 			->first();
 
 		if (!$user || !password_verify($password, $user->password)) {
-			return redirect()->back()->with(['error' => 'Incorrect User or Password']);
+			return redirect()->back()->with(['error' => 'Incorrect User or Password'])->send();
 		}
 
 		// Session::regenerate();
@@ -93,7 +94,7 @@ class AuthController extends Controller
 			);
 		}
 		
-		return redirect()->back()->with(['success' => 'Login Successful']);
+		return redirect()->back()->with(['success' => 'Login Successful'])->send();
 		// return json(['ok' => true], 200);
 	}
 
@@ -108,7 +109,8 @@ class AuthController extends Controller
 	public function registrationProcess()
 	{
 		$this->middleware(Guest::class);
-		verify_csrf();
+		// verify_csrf(); // CSRF verification is handled by the Csrf middleware globally, so no need to call it here.
+		
 		/*
 		|-----------------------------------------------------------
 		| Validation way 2: Without Try-Catch, using fails() method
@@ -124,12 +126,12 @@ class AuthController extends Controller
 			->confirmed('password');
 		if ($validator->fails()) {
 			$errors = $validator->errors();
-			return redirect()->back()->with(['errors' => $errors]);
+			return redirect()->back()->with(['errors' => $errors])->send();
 		}
 		$input = $validator->validated();
 
 		if ($input['password'] !== $input['password_confirmation']) {
-			return redirect()->back()->with(['error' => 'Password confirmation does not match !']);
+			return redirect()->back()->with(['error' => 'Password confirmation does not match !'])->send();
 		}
 
 		$check_user = db()->table('users')
@@ -137,7 +139,7 @@ class AuthController extends Controller
 			->count();
 
 		if ($check_user) {
-			return redirect()->back()->with(['error' => 'username already exist']);
+			return redirect()->back()->with(['error' => 'username already exist'])->send();
 		}
 
 		$check_email = db()->table('users')
@@ -145,7 +147,7 @@ class AuthController extends Controller
 			->count();
 
 		if ($check_email) {
-			return redirect()->back()->with(['error' => 'email already exist']);
+			return redirect()->back()->with(['error' => 'email already exist'])->send();
 		}
 
 		unset($input['_csrf']);
@@ -157,7 +159,7 @@ class AuthController extends Controller
 		$user_id = db()->table('users')->insert($input, true);
 
 		if (!$user_id) {
-			return redirect()->back()->with(['error' => 'Registration failed']);
+			return redirect()->back()->with(['error' => 'Registration failed'])->send();
 		}
 
 		// assign default role

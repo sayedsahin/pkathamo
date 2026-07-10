@@ -16,7 +16,7 @@
     <?php endif; ?>
 
     <!-- Styles -->
-    <link rel="stylesheet" href="/assets/app.css">
+    <link rel="stylesheet" href="<?= BASE_URL ?>/assets/styles.css">
 </head>
 <body>
 

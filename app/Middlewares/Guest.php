@@ -11,7 +11,7 @@ class Guest implements MiddlewareInterface
     {
         if (Auth::check()) {
             redirect()->to('/');
-            exit;
+            // exit('You are already logged in. Redirecting to home page...');
         }
     }
 }

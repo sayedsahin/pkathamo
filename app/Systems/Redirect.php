@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Systems;
 
 class Redirect
@@ -8,13 +9,20 @@ class Redirect
 
     public function __construct(string $url = '')
     {
-        $this->to($url);
+        if (!empty($url)) {
+            $this->to($url);
+        }
     }
 
-    public function to(string $url = ''): self
+    public function to(string $url = ''): void
     {
         $this->url = rtrim(BASE_URL, '/') . '/' . ltrim($url, '/');
-        return $this;
+        if (!empty($this->data)) {
+            $_SESSION['flash'] = $this->data;
+        }
+        http_response_code(302);
+        header('Location: ' . $this->url);
+        exit;
     }
 
     public function back(): self
@@ -34,15 +42,14 @@ class Redirect
         return $this;
     }
 
-    public function toResponse(): \App\Systems\Response
+    public function send()
     {
-        // Store data in session if available
         if (!empty($this->data)) {
             $_SESSION['flash'] = $this->data;
         }
-
-        // Return Response object instead of calling exit()
-        return response('', 302)->header('Location', $this->url);
+        http_response_code(302);
+        header('Location: ' . $this->url);
+        exit;
     }
 
     private function isSameDomain(string $url): bool
