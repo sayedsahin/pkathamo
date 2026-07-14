@@ -15,7 +15,7 @@ class HomeController extends Controller
 
 		// return redirect('/login');
 		// echo session()->get('auth_user_id');
-		// return redirect('/login')->with(['error' => 'Unauthorized']);
+		// return redirect()->with(['error' => 'Unauthorized'])->to('/login');
 		// $this->middleware(Authenticated::class);
 
 		// $user = Auth::user();

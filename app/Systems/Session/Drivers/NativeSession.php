@@ -27,7 +27,7 @@ final class NativeSession implements SessionInterface
                 'cookie_httponly'   => true,
                 'cookie_secure'    => $this->config['secure'] && TrustedProxy::isSecureRequest($_SERVER),
                 'cookie_samesite'  => $this->config['samesite'],
-                // 'gc_maxlifetime'   => $this->config['lifetime'],
+                'gc_maxlifetime'   => (int) $this->config['lifetime'],
             ]);
         }
 

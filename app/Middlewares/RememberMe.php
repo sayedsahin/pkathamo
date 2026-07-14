@@ -37,7 +37,7 @@ final class RememberMe implements MiddlewareInterface
         }
 
         Session::regenerate();
-        Session::set('auth_user_id', $row->user_id);
+        Session::set('auth_user_id', (int) $row->user_id);
         Auth::setViaRemember(true);
 
         // Rotate token

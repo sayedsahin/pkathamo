@@ -4,7 +4,7 @@ use App\Systems\Session\Drivers\NativeSession;
 use App\Systems\Session\Drivers\NullSession;
 use App\Systems\Session\Session;
 
-$config = require ROOT_PATH . '/config/session.php';
+$config = (array) config('session');
 
 switch ($config['driver']) {
     case 'native':

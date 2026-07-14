@@ -7,25 +7,38 @@ class Redirect
     protected string $url = '';
     protected array $data = [];
 
-    public function __construct(string $url = '')
+    public function __construct(string $url = '', $with = [])
     {
         if (!empty($url)) {
-            $this->to($url);
+            # code...
+            if ($with) {
+                $this->with($with);
+            }
+
+            if ($url === 'back') {
+                $this->back();
+                return;
+            }
+
+            if ($url !== 'back') {
+                $this->to($url);
+            }
         }
+    }
+
+    public function with(array $data): self
+    {
+        $this->data = $data;
+        return $this;
     }
 
     public function to(string $url = ''): void
     {
         $this->url = rtrim(BASE_URL, '/') . '/' . ltrim($url, '/');
-        if (!empty($this->data)) {
-            $_SESSION['flash'] = $this->data;
-        }
-        http_response_code(302);
-        header('Location: ' . $this->url);
-        exit;
+        $this->send();
     }
 
-    public function back(): self
+    public function back(): void
     {
         $referer = $_SERVER['HTTP_REFERER'] ?? '';
         if ($referer && $this->isSameDomain($referer)) {
@@ -33,13 +46,8 @@ class Redirect
         } else {
             $this->url = BASE_URL;
         }
-        return $this;
-    }
 
-    public function with(array $data): self
-    {
-        $this->data = $data;
-        return $this;
+        $this->send();
     }
 
     public function send()

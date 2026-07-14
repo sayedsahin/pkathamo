@@ -135,7 +135,7 @@ class ApiAuthController extends Controller
         $user = db()->table('users')->where('email', $data['email'])->first();
 
         if (!$user) {
-            return response()->json(['error' => 'Email not found'], 404);
+            return response()->json(['message' => 'If the account exists, a reset link has been sent.'], 200);
         }
 
         $resetToken = bin2hex(random_bytes(32));
@@ -148,7 +148,7 @@ class ApiAuthController extends Controller
         // mail($data['email'], 'Reset Password', 'Token: ' . $resetToken);
 
         return response()->json([
-            'message' => 'Reset link sent to email',
+            'message' => 'If the account exists, a reset link has been sent.',
             // 'reset_token' => $resetToken // For testing
         ], 200);
     }

@@ -111,9 +111,9 @@ if (!function_exists('show_flash')) {
 }
 
 if (!function_exists('redirect')) {
-	function redirect(string $link = '')
+	function redirect(string $link = '', array $with = [])
 	{
-		return new Redirect($link);
+		return new Redirect($link, $with);
 	}
 }
 
