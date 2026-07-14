@@ -1,58 +1,105 @@
 <?php
+
+declare(strict_types=1);
+
 namespace App\Supports;
 
 use App\Supports\RateLimitDriver\ApcuDriver;
+use App\Supports\RateLimitDriver\FileDriver;
 use App\Supports\RateLimitDriver\MemcachedDriver;
 use App\Supports\RateLimitDriver\RateLimitDriverInterface;
 use App\Supports\RateLimitDriver\RedisDriver;
+use InvalidArgumentException;
+use RuntimeException;
 
 final class RateLimiter
 {
     private static ?RateLimitDriverInterface $driver = null;
 
-    public static function hit(string $key, int $max, int $window)
-    {
-        $driver = self::driver();
+    public static function hit(
+        string $key,
+        int $maxAttempts,
+        int $windowSeconds
+    ): RateLimitResult {
+        self::validate($key, $maxAttempts, $windowSeconds);
 
-        return $driver->hit($key, $max, $window);
+        return self::driver()->hit(
+            self::normalizeKey($key),
+            $maxAttempts,
+            $windowSeconds
+        );
+    }
+
+    public static function clear(string $key): void
+    {
+        if (trim($key) === '') {
+            throw new InvalidArgumentException(
+                'Rate-limit key cannot be empty.'
+            );
+        }
+
+        self::driver()->clear(self::normalizeKey($key));
+    }
+
+    public static function reset(): void
+    {
+        self::$driver = null;
     }
 
     private static function driver(): RateLimitDriverInterface
     {
-        if (!self::$driver) {
-            self::$driver = self::resolve();
-        }
-
-        return self::$driver;
+        return self::$driver ??= self::resolve();
     }
 
     private static function resolve(): RateLimitDriverInterface
     {
-        return match (config('app.rate_limit_store')) {
-            'apcu'        => new ApcuDriver(),
-            'memcached'   => new MemcachedDriver(),
-            'redis'       => new RedisDriver(),
-            default       => self::auto(),
+        $driver = strtolower(trim((string) config(
+            'rate_limit.driver',
+            'file'
+        )));
+
+        return match ($driver) {
+            'file' => new FileDriver(),
+            'apcu' => new ApcuDriver(),
+            'redis' => new RedisDriver(),
+            'memcached' => new MemcachedDriver(),
+            default => throw new RuntimeException(
+                "Unsupported rate-limit driver: {$driver}"
+            ),
         };
     }
 
-    private static function auto(): RateLimitDriverInterface
+    private static function normalizeKey(string $key): string
     {
-        if (class_exists(\Redis::class)) {
-            return new RedisDriver();
+        $prefix = (string) config(
+            'rate_limit.prefix',
+            'pkathamo:rate-limit:'
+        );
+
+        return $prefix . hash('sha256', $key);
+    }
+
+    private static function validate(
+        string $key,
+        int $maxAttempts,
+        int $windowSeconds
+    ): void {
+        if (trim($key) === '') {
+            throw new InvalidArgumentException(
+                'Rate-limit key cannot be empty.'
+            );
         }
 
-        if (class_exists(\Memcached::class)) {
-            return new MemcachedDriver();
+        if ($maxAttempts < 1) {
+            throw new InvalidArgumentException(
+                'Maximum attempts must be at least 1.'
+            );
         }
 
-        if (function_exists('apcu_enabled') && apcu_enabled()) {
-            return new ApcuDriver();
+        if ($windowSeconds < 1) {
+            throw new InvalidArgumentException(
+                'Rate-limit window must be at least 1 second.'
+            );
         }
-
-        throw new \RuntimeException('No rate-limit driver is available. Install Redis, Memcached or APCu.');
     }
 }
-
-
-

@@ -1,8 +1,8 @@
 *.mp3
 *.pdf
 *.zip
+*.ini
 .env
 # /public
-/storage/cache/*.php
-/storage/cache/*.cache
+/storage/cache/*
 /vendor

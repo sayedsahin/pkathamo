@@ -1,71 +1,167 @@
 <?php
+
+declare(strict_types=1);
+
 namespace App\Middlewares;
 
 use App\Supports\RateLimiter;
+use App\Supports\RateLimitResult;
 
-class RateLimit implements MiddlewareInterface
+final class RateLimit implements MiddlewareInterface
 {
-    protected int $apiIpLimit    = 30;
-    protected int $webIpLimit    = 30;
-
-    protected int $apiTokenLimit = 60;
-    protected int $webUserLimit  = 120;
-
     public function handle(): void
     {
-        $isApi = is_api_request();
+        [$key, $maxAttempts, $windowSeconds] = $this->policy();
 
-        [$key, $max, $window] = $isApi
+        $result = RateLimiter::hit(
+            $key,
+            $maxAttempts,
+            $windowSeconds
+        );
+
+        $this->sendHeaders($result);
+
+        if (!$result->allowed()) {
+            $this->reject($result);
+        }
+    }
+
+    private function policy(): array
+    {
+        $method = strtoupper(request()->method());
+
+        $path = '/' . trim(
+            request()->path(),
+            '/'
+        );
+
+        $signature = $method . ' ' . $path;
+
+        $sensitive = config(
+            'rate_limit.sensitive_routes',
+            []
+        );
+
+        $routes = is_array($sensitive)
+            ? ($sensitive['routes'] ?? [])
+            : [];
+
+        if (
+            is_array($routes)
+            && in_array($signature, $routes, true)
+        ) {
+            return [
+                'sensitive:'
+                    . $signature
+                    . ':ip:'
+                    . $this->ip(),
+
+                (int) ($sensitive['max_attempts'] ?? 5),
+
+                (int) ($sensitive['window_seconds'] ?? 60),
+            ];
+        }
+
+        return is_api_request()
             ? $this->apiPolicy()
             : $this->webPolicy();
-
-        if (!RateLimiter::hit($key, $max, $window)) {
-            $this->reject($window);
-        }
     }
 
     private function apiPolicy(): array
     {
-        $token = $this->bearerToken();
-
-        if ($token) {
-            return ['api:' . sha1($token), $this->apiTokenLimit, 60]; // 60 seconds
-        }
-
-        return ['api:ip:' . $this->ip(), $this->apiIpLimit, 60];
+        return [
+            'api:ip:' . $this->ip(),
+            (int) config(
+                'rate_limit.api.max_attempts',
+                120
+            ),
+            (int) config(
+                'rate_limit.api.window_seconds',
+                60
+            ),
+        ];
     }
 
     private function webPolicy(): array
     {
         if (isset($_SESSION['auth_user_id'])) {
-            return ['web:user:' . $_SESSION['id'], $this->webUserLimit, 60];
+            return [
+                'web:user:' . (int) $_SESSION['auth_user_id'],
+                (int) config(
+                    'rate_limit.web.authenticated.max_attempts',
+                    240
+                ),
+                (int) config(
+                    'rate_limit.web.authenticated.window_seconds',
+                    60
+                ),
+            ];
         }
 
-        return ['web:ip:' . $this->ip(), $this->webIpLimit, 60];
-    }
-
-    private function bearerToken(): ?string
-    {
-        // $h = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
-        // return str_starts_with($h, 'Bearer ') ? substr($h, 7) : null;
-        return request()->bearerToken();
+        return [
+            'web:ip:' . $this->ip(),
+            (int) config(
+                'rate_limit.web.guest.max_attempts',
+                120
+            ),
+            (int) config(
+                'rate_limit.web.guest.window_seconds',
+                60
+            ),
+        ];
     }
 
     private function ip(): string
     {
-        return request()->ip() ?? '0.0.0.0';
+        $ip = request()->ip();
+
+        return is_string($ip) && $ip !== ''
+            ? $ip
+            : '0.0.0.0';
     }
 
-    private function reject(int $window): void
+    private function sendHeaders(RateLimitResult $result): void
+    {
+        if (headers_sent()) {
+            return;
+        }
+
+        header('X-RateLimit-Limit: ' . $result->limit());
+        header(
+            'X-RateLimit-Remaining: '
+            . $result->remaining()
+        );
+        header('X-RateLimit-Reset: ' . $result->resetAt());
+    }
+
+    private function reject(RateLimitResult $result): void
     {
         http_response_code(429);
 
+        if (!headers_sent()) {
+            header(
+                'Retry-After: '
+                . max(1, $result->retryAfter())
+            );
+        }
+
         if (is_api_request()) {
-            header('Content-Type: application/json');
-            echo json_encode([
-                'error' => 'Too many requests',
-                'retry_after' => $window,
-            ]);
+            if (!headers_sent()) {
+                header(
+                    'Content-Type: application/json; charset=utf-8'
+                );
+            }
+
+            echo json_encode(
+                [
+                    'error' => 'Too many requests',
+                    'retry_after' => max(
+                        1,
+                        $result->retryAfter()
+                    ),
+                ],
+                JSON_UNESCAPED_SLASHES
+            );
         } else {
             echo 'Too many requests. Please try again later.';
         }
@@ -73,4 +169,3 @@ class RateLimit implements MiddlewareInterface
         exit;
     }
 }
-

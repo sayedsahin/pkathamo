@@ -1,34 +1,97 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Supports\RateLimitDriver;
 
+use App\Supports\RateLimitResult;
+use RuntimeException;
 
 final class ApcuDriver implements RateLimitDriverInterface
 {
-    public function hit(string $key, int $max, int $window): bool
+    public function __construct()
     {
-        if (!function_exists('apcu_fetch')) {
-            return true;
+        if (
+            !function_exists('apcu_enabled')
+            || !apcu_enabled()
+            || !function_exists('apcu_add')
+            || !function_exists('apcu_inc')
+        ) {
+            throw new RuntimeException(
+                'APCu extension is not enabled.'
+            );
         }
+    }
 
+    public function hit(
+        string $key,
+        int $maxAttempts,
+        int $windowSeconds
+    ): RateLimitResult {
+        $counterKey = $key . ':count';
+        $resetKey = $key . ':reset';
         $now = time();
-        $bucket = apcu_fetch($key, $ok);
 
-        if (!$ok || $bucket['expires'] < $now) {
-            apcu_store($key, [
-                'count' => 1,
-                'expires' => $now + $window,
-            ], $window);
-            return true;
+        if (apcu_add($counterKey, 1, $windowSeconds)) {
+            $resetAt = $now + $windowSeconds;
+            apcu_store($resetKey, $resetAt, $windowSeconds);
+
+            return RateLimitResult::fromCounter(
+                1,
+                $maxAttempts,
+                $resetAt,
+                $now
+            );
         }
 
-        if ($bucket['count'] >= $max) {
-            return false;
+        $attempts = apcu_inc($counterKey, 1, $success);
+
+        if (!$success) {
+            if (apcu_add($counterKey, 1, $windowSeconds)) {
+                $resetAt = $now + $windowSeconds;
+                apcu_store($resetKey, $resetAt, $windowSeconds);
+
+                return RateLimitResult::fromCounter(
+                    1,
+                    $maxAttempts,
+                    $resetAt,
+                    $now
+                );
+            }
+
+            $attempts = apcu_inc($counterKey, 1, $success);
         }
 
-        $bucket['count']++;
-        apcu_store($key, $bucket, $bucket['expires'] - $now);
-        return true;
+        if (!$success || !is_int($attempts)) {
+            throw new RuntimeException(
+                'Unable to update APCu rate-limit counter.'
+            );
+        }
+
+        $resetAt = apcu_fetch($resetKey, $resetFound);
+
+        if (
+            !$resetFound
+            || !is_int($resetAt)
+            || $resetAt <= $now
+        ) {
+            $resetAt = $now + $windowSeconds;
+            apcu_store($resetKey, $resetAt, $windowSeconds);
+        }
+
+        return RateLimitResult::fromCounter(
+            $attempts,
+            $maxAttempts,
+            $resetAt,
+            $now
+        );
+    }
+
+    public function clear(string $key): void
+    {
+        apcu_delete([
+            $key . ':count',
+            $key . ':reset',
+        ]);
     }
 }
-

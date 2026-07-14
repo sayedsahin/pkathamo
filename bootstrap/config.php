@@ -11,7 +11,7 @@ $cacheFile = STORAGE_PATH . '/cache/config.php';
 if (is_file($cacheFile)) {
     Config::load(ConfigLoader::loadFromCache($cacheFile));
 } else {
-    require ROOT_PATH . '/bootstrap/env.php';
+    require ROOT_PATH . '/bootstrap/dotenv.php';
 
     $items = ConfigLoader::load(ROOT_PATH . '/config');
     ConfigLoader::writeCache($cacheFile, $items);

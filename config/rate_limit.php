@@ -1,0 +1,77 @@
+<?php
+
+declare(strict_types=1);
+
+return [
+    /*
+    |--------------------------------------------------------------------------
+    | Driver
+    |--------------------------------------------------------------------------
+    | file: works on every normal single-server PHP installation.
+    | redis: use for multiple servers or containers.
+    | apcu/memcached: optional single-server stores.
+    */
+    'driver' => env('RATE_LIMIT_STORE', 'file'),
+
+    'prefix' => env(
+        'RATE_LIMIT_PREFIX',
+        'pkathamo:rate-limit:'
+    ),
+
+    'web' => [
+        'guest' => [
+            'max_attempts' => 120,
+            'window_seconds' => 60,
+        ],
+        'authenticated' => [
+            'max_attempts' => 240,
+            'window_seconds' => 60,
+        ],
+    ],
+
+    'api' => [
+        'max_attempts' => 120,
+        'window_seconds' => 60,
+    ],
+
+    'sensitive_routes' => [
+        'max_attempts' => 5,
+        'window_seconds' => 60,
+        'routes' => [
+            'POST /login',
+            'POST /register',
+            'POST /api/auth/login',
+            'POST /api/auth/register',
+            'POST /api/auth/forgot',
+        ],
+    ],
+
+    'file' => [
+        'path' => STORAGE_PATH . '/cache/rate-limit',
+        'cleanup_probability' => 1,
+        'stale_after_seconds' => 86400,
+        'cleanup_delete_limit' => 100,
+    ],
+
+    'redis' => [
+        'host' => env('REDIS_HOST', '127.0.0.1'),
+        'port' => env('REDIS_PORT', 6379),
+        'username' => env('REDIS_USERNAME', null),
+        'password' => env('REDIS_PASSWORD', null),
+        'database' => env('REDIS_RATE_LIMIT_DB', 2),
+        'timeout' => env('REDIS_TIMEOUT', 2.0),
+        'read_timeout' => env(
+            'REDIS_READ_TIMEOUT',
+            2.0
+        ),
+    ],
+
+    'memcached' => [
+        'host' => env('MEMCACHED_HOST', '127.0.0.1'),
+        'port' => env('MEMCACHED_PORT', 11211),
+        'connect_timeout' => env(
+            'MEMCACHED_CONNECT_TIMEOUT',
+            2000
+        ),
+    ],
+];

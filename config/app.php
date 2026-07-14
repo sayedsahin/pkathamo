@@ -12,5 +12,4 @@ return [
         'trim',
         explode(',', (string) env('TRUSTED_PROXIES', ''))
     ))),
-    'rate_limit_store' => env('RATE_LIMIT_STORE', 'apcu'),
 ];

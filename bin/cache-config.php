@@ -11,7 +11,7 @@ require_once ROOT_PATH . '/app/Helpers/config.php';
 
 use App\Systems\Config\ConfigLoader;
 
-require ROOT_PATH . '/bootstrap/env.php';
+require ROOT_PATH . '/bootstrap/dotenv.php';
 
 $cacheFile = STORAGE_PATH . '/cache/config.php';
 $items = ConfigLoader::load(ROOT_PATH . '/config');

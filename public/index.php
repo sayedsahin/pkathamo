@@ -12,27 +12,12 @@ require_once ROOT_PATH . '/vendor/autoload.php';
 
 /*
 |--------------------------------------------------------------------------
-| Load Cached ENV (FAST)
-|--------------------------------------------------------------------------
-*/
-/* if (is_file(ROOT_PATH . '/storage/cache/env.php')) {
-    foreach (require ROOT_PATH . '/storage/cache/env.php' as $k => $v) {
-        $_ENV[$k] = $v;
-    }
-} else {
-    require ROOT_PATH . '/bin/cache-env.php';
-} */
-/*
-|--------------------------------------------------------------------------
 | Load Config
 |--------------------------------------------------------------------------
 | If storage/cache/config.php exists, config loads from cache.
 | If not, framework loads .env, builds config cache, then loads config.
 */
 require ROOT_PATH . '/bootstrap/config.php';
-
-// request remove starting for async
-// App\Supports\RequestContext::clear();
 
 /*
 |--------------------------------------------------------------------------
@@ -53,12 +38,16 @@ if (!$isApi) {
 require ROOT_PATH . '/bootstrap/cache.php';
 
 
-// Auth should be bootstrapped after session
+/*
+|--------------------------------------------------------------------------
+| Auth Setup
+|--------------------------------------------------------------------------
+*/
 require ROOT_PATH . '/bootstrap/auth.php';
 
 /*
 |--------------------------------------------------------------------------
-| Bootstrap Container (After Middleware)
+| Container Setup
 |--------------------------------------------------------------------------
 */
 require ROOT_PATH . '/bootstrap/container.php';
@@ -71,10 +60,6 @@ require ROOT_PATH . '/bootstrap/container.php';
 */
 $kernel = new \App\Systems\MiddlewareKernel();
 
-$middlewares = require ROOT_PATH . '/config/middleware.php';
-
-// $kernel->web($middlewares['web']);
-// $kernel->api($middlewares['api']);
 $kernel->web(config('middleware.web'));
 $kernel->api(config('middleware.api'));
 
@@ -89,5 +74,5 @@ require ROOT_PATH . '/app/Systems/FastRoute.php';
 
 
 
-// request remove after ending  //no need anymore
+// request remove after ending
 // App\Supports\RequestContext::clear();
