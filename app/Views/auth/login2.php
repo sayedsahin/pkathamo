@@ -1,16 +1,8 @@
 <?php
 
-use App\Supports\Auth;
-use App\Systems\Session\Session;
-
 ob_start();
 ?>
-
 <h2><?= e($title) ?></h2>
-<?php
-pr($_SESSION);
-Auth::user();
-?>
 <form method="post" action="/login">
     <?= csrf_field() ?>
     <p>

@@ -1,10 +1,6 @@
 <?php ob_start(); ?>
 
 <h2><?= e($title) ?></h2>
-<?php 
-pr($_SESSION); 
-
-?>
 <form method="post" action="/register">
     <?= csrf_field() ?>
     <!-- name -->

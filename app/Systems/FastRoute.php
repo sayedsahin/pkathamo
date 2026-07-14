@@ -5,7 +5,7 @@ $dispatcher = FastRoute\cachedDispatcher(function (FastRoute\RouteCollector $rou
 	require_once ROOT_PATH . '/config/routes.php';
 }, [
 	'cacheFile' => ROOT_PATH . '/storage/cache/route.cache', /* required */
-	'cacheDisabled' => DEBUG_MODE,     /* optional, enabled by default */
+	'cacheDisabled' => config('app.debug'),     /* optional, enabled by default */
 ]);
 
 // Fetch method and URI from somewhere

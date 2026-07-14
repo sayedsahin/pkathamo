@@ -15,19 +15,21 @@ require_once ROOT_PATH . '/vendor/autoload.php';
 | Load Cached ENV (FAST)
 |--------------------------------------------------------------------------
 */
-if (is_file(ROOT_PATH . '/storage/cache/env.php')) {
+/* if (is_file(ROOT_PATH . '/storage/cache/env.php')) {
     foreach (require ROOT_PATH . '/storage/cache/env.php' as $k => $v) {
         $_ENV[$k] = $v;
     }
 } else {
     require ROOT_PATH . '/bin/cache-env.php';
-}
+} */
 /*
 |--------------------------------------------------------------------------
-| Global Config
+| Load Config
 |--------------------------------------------------------------------------
+| If storage/cache/config.php exists, config loads from cache.
+| If not, framework loads .env, builds config cache, then loads config.
 */
-require ROOT_PATH . '/config/config.php';
+require ROOT_PATH . '/bootstrap/config.php';
 
 // request remove starting for async
 // App\Supports\RequestContext::clear();
@@ -71,8 +73,10 @@ $kernel = new \App\Systems\MiddlewareKernel();
 
 $middlewares = require ROOT_PATH . '/config/middleware.php';
 
-$kernel->web($middlewares['web']);
-$kernel->api($middlewares['api']);
+// $kernel->web($middlewares['web']);
+// $kernel->api($middlewares['api']);
+$kernel->web(config('middleware.web'));
+$kernel->api(config('middleware.api'));
 
 $kernel->run($isApi);
 
@@ -85,5 +89,5 @@ require ROOT_PATH . '/app/Systems/FastRoute.php';
 
 
 
-// request remove after ending
+// request remove after ending  //no need anymore
 // App\Supports\RequestContext::clear();

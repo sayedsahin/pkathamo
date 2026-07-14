@@ -1,5 +1,7 @@
 <?php
 
+use App\Systems\Session\Session;
+
 if (!function_exists('view')) {
     function view(string $view, array $data = []): void
     {
@@ -37,15 +39,14 @@ if (!function_exists('view_path')) {
 
 function csrf_token(): string
 {
-    if (session_status() !== PHP_SESSION_ACTIVE) {
-        session_start();
+    $token = Session::get('_csrf');
+
+    if (!$token) {
+        $token = bin2hex(random_bytes(32));
+        Session::set('_csrf', $token);
     }
 
-    if (empty($_SESSION['_csrf'])) {
-        $_SESSION['_csrf'] = bin2hex(random_bytes(32));
-    }
-
-    return $_SESSION['_csrf'];
+    return $token;
 }
 
 function csrf_field(): string
@@ -55,16 +56,16 @@ function csrf_field(): string
 
 function verify_csrf(): void
 {
-    if (session_status() !== PHP_SESSION_ACTIVE) {
-        session_start();
-    }
+    // This function is now handled by the Csrf middleware, so you don't need to call it manually in your controllers.
 
-    $token = $_POST['_csrf'] ?? '';
+    // $session_token = Session::get('_csrf');
 
-    if (!hash_equals($_SESSION['_csrf'] ?? '', $token)) {
-        http_response_code(419);
-        exit('CSRF token mismatch');
-    }
+    // $token = $_POST['_csrf'] ?? '';
+
+    // if (!hash_equals($session_token ?? '', $token)) {
+    //     http_response_code(419);
+    //     exit('CSRF token mismatch');
+    // }
 }
 
 // function send_security_headers(): void

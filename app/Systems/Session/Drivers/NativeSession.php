@@ -2,6 +2,7 @@
 namespace App\Systems\Session\Drivers;
 
 use App\Systems\Session\SessionInterface;
+use App\Systems\TrustedProxy;
 
 final class NativeSession implements SessionInterface
 {
@@ -24,7 +25,7 @@ final class NativeSession implements SessionInterface
                 'use_strict_mode'   => 1,
                 'use_only_cookies'  => 1,
                 'cookie_httponly'   => true,
-                'cookie_secure'    => $this->config['secure'] && (!empty($_SERVER['HTTPS'])),
+                'cookie_secure'    => $this->config['secure'] && TrustedProxy::isSecureRequest($_SERVER),
                 'cookie_samesite'  => $this->config['samesite'],
                 // 'gc_maxlifetime'   => $this->config['lifetime'],
             ]);

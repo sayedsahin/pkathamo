@@ -15,6 +15,19 @@ if (!function_exists('request')) {
 		}
 
 		return $req;
+
+		// Async Safe
+		// $request = RequestContext::get('http.request');
+
+		// if ($request instanceof Request) {
+		// 	return $request;
+		// }
+
+		// $request = Request::capture();
+
+		// RequestContext::set('http.request', $request);
+
+		// return $request;
 	}
 }
 

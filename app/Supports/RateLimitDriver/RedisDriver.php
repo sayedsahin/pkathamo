@@ -8,11 +8,11 @@ final class RedisDriver implements RateLimitDriverInterface
 
     public function __construct()
     {
+        $redis_host = config('database.redis.host');
+        $redis_port = config('database.redis.port');
+
         $this->redis = new \Redis();
-        $this->redis->connect(
-            $_ENV['REDIS_HOST'] ?? '127.0.0.1',
-            $_ENV['REDIS_PORT'] ?? 6379
-        );
+        $this->redis->connect($redis_host, $redis_port);
     }
 
     public function hit(string $key, int $max, int $window): bool

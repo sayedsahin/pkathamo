@@ -124,19 +124,34 @@ final class Request
     public function fullUrl(): string
     {
         $scheme = $this->isSecure() ? 'https' : 'http';
-        $host   = $this->server['HTTP_HOST'] ?? 'localhost';
 
-        return $scheme . '://' . $host . ($this->server['REQUEST_URI'] ?? '/');
+        return $scheme . '://' . $this->host() . ($this->server['REQUEST_URI'] ?? '/');
+    }
+
+    public function host(): string
+    {
+        if (TrustedProxy::isSecureRequest($this->server)) {
+            $forwardedHost =
+                $this->server['HTTP_X_FORWARDED_HOST'] ?? '';
+
+            if ($forwardedHost !== '') {
+                return trim(explode(',', $forwardedHost)[0]);
+            }
+        }
+
+        return $this->server['HTTP_HOST'] ?? 'localhost';
     }
 
     public function ip(): ?string
     {
-        return $this->server['REMOTE_ADDR'] ?? null;
+        // return $this->server['REMOTE_ADDR'] ?? null;
+        return TrustedProxy::clientIp($this->server);
     }
 
     public function isSecure(): bool
     {
-        return isset($this->server['HTTPS']) && $this->server['HTTPS'] !== 'off';
+        // return isset($this->server['HTTPS']) && $this->server['HTTPS'] !== 'off';
+        return TrustedProxy::isSecureRequest($this->server);
     }
 
     /* -----------------------

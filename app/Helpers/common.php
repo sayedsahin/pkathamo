@@ -1,7 +1,6 @@
 <?php
 
 use App\Models\DB;
-use App\Supports\RequestContext;
 use App\Supports\Role;
 use App\Systems\Cache\Cache;
 use App\Systems\Session\Session;
@@ -16,16 +15,7 @@ if (!function_exists('cache')) {
 if (!function_exists('db')) {
     function db(): DB
     {
-        $db = RequestContext::get('db');
-
-        if ($db) {
-            return $db;
-        }
-        $db = new DB();
-
-        RequestContext::set('db', $db);
-
-        return $db;
+        return new DB();
     }
 }
 
@@ -60,4 +50,3 @@ if (!function_exists('session')) {
         return $proxy;
     }
 }
-

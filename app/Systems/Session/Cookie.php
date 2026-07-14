@@ -12,7 +12,7 @@ final class Cookie
         setcookie($name, $value, [
             'expires'  => time() + $ttl,
             'path'     => '/',
-            'secure'   => isset($_SERVER['HTTPS']),
+            'secure'   => request()->isSecure(),
             'httponly' => true,
             'samesite' => $samesite,
         ]);

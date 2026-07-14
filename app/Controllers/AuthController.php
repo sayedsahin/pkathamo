@@ -31,7 +31,6 @@ class AuthController extends Controller
 
 	public function loginProcess()
 	{
-		// verify_csrf(); // CSRF verification is handled by the Csrf middleware globally, so no need to call it here.
 
 		/*
 		|-----------------------------------------------------------
@@ -109,8 +108,7 @@ class AuthController extends Controller
 	public function registrationProcess()
 	{
 		$this->middleware(Guest::class);
-		// verify_csrf(); // CSRF verification is handled by the Csrf middleware globally, so no need to call it here.
-		
+
 		/*
 		|-----------------------------------------------------------
 		| Validation way 2: Without Try-Catch, using fails() method

@@ -20,7 +20,7 @@ class ApiAuthController extends Controller
         $request = request();
 
         try {
-            $data = Validator::make($request->all())
+            $data = Validator::make($request->json())
                 ->required(['email', 'password'])
                 ->email('email')
                 ->validated();
@@ -65,7 +65,7 @@ class ApiAuthController extends Controller
         $request = request();
 
         try {
-            $data = Validator::make($request->all())
+            $data = Validator::make($request->json())
                 ->required(['name', 'username', 'email', 'password', 'password_confirmation'])
                 ->string(['name', 'username', 'email', 'password', 'password_confirmation'])
                 ->email('email')
@@ -115,7 +115,7 @@ class ApiAuthController extends Controller
 
         return response()->json([
             'message' => 'Registration successful. Please verify your email.',
-            'verification_token' => $userData['verification_token'] // For testing
+            // 'verification_token' => $userData['verification_token'] // For testing
         ], 201);
     }
 
@@ -124,7 +124,7 @@ class ApiAuthController extends Controller
         $request = request();
 
         try {
-            $data = Validator::make($request->all())
+            $data = Validator::make($request->json())
                 ->required(['email'])
                 ->email('email')
                 ->validated();
@@ -149,7 +149,7 @@ class ApiAuthController extends Controller
 
         return response()->json([
             'message' => 'Reset link sent to email',
-            'reset_token' => $resetToken // For testing
+            // 'reset_token' => $resetToken // For testing
         ], 200);
     }
 

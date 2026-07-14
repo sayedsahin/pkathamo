@@ -6,6 +6,7 @@
         },
         "files": [
             "app/Helpers/common.php",
+            "app/Helpers/config.php",
             "app/Helpers/http.php",
             "app/Helpers/text.php",
             "app/Helpers/time.php",
@@ -16,7 +17,6 @@
     "require": {
         "php": ">= 8.0",
         "nikic/fast-route": "^1.3",
-        "symfony/dotenv": "^7.4",
-        "amphp/redis": "^2.0"
+        "symfony/dotenv": "^7.4"
     }
 }

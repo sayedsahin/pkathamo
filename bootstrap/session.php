@@ -1,7 +1,7 @@
 <?php
 
-use App\Systems\Session\Drivers\AsyncSession;
 use App\Systems\Session\Drivers\NativeSession;
+use App\Systems\Session\Drivers\NullSession;
 use App\Systems\Session\Session;
 
 $config = require ROOT_PATH . '/config/session.php';
@@ -11,8 +11,11 @@ switch ($config['driver']) {
         $driver = new NativeSession($config);
         break;
 
-    case 'revolt':
-        $driver = new AsyncSession($config);
+    case 'file':
+        $driver = new NullSession($config); // change to FileSession
+        break;
+    case 'redis':
+        $driver = new NullSession($config); // change to RedisSession
         break;
 
     default:

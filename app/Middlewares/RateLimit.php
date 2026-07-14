@@ -37,7 +37,7 @@ class RateLimit implements MiddlewareInterface
 
     private function webPolicy(): array
     {
-        if (isset($_SESSION['id'])) {
+        if (isset($_SESSION['auth_user_id'])) {
             return ['web:user:' . $_SESSION['id'], $this->webUserLimit, 60];
         }
 
@@ -46,13 +46,14 @@ class RateLimit implements MiddlewareInterface
 
     private function bearerToken(): ?string
     {
-        $h = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
-        return str_starts_with($h, 'Bearer ') ? substr($h, 7) : null;
+        // $h = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
+        // return str_starts_with($h, 'Bearer ') ? substr($h, 7) : null;
+        return request()->bearerToken();
     }
 
     private function ip(): string
     {
-        return $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+        return request()->ip() ?? '0.0.0.0';
     }
 
     private function reject(int $window): void

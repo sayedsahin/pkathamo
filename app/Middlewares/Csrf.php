@@ -2,6 +2,7 @@
 
 namespace App\Middlewares;
 
+use App\Systems\Session\Session;
 
 class Csrf implements MiddlewareInterface
 {
@@ -11,11 +12,11 @@ class Csrf implements MiddlewareInterface
             return;
         }
 
-        session_start();
+        $session_token = Session::get('_csrf');
 
         $token = $_POST['_csrf'] ?? '';
 
-        if (!hash_equals($_SESSION['_csrf'] ?? '', $token)) {
+        if (!hash_equals($session_token ?? '', $token)) {
             http_response_code(419);
             exit('CSRF token mismatch');
         }

@@ -2,7 +2,7 @@
 
 use App\Systems\Container;
 
-$config = require ROOT_PATH . '/config/container.php';
+// $config = require ROOT_PATH . '/config/container.php';
 
 $container = new Container();
 
@@ -11,7 +11,7 @@ $container = new Container();
 | Register Singletons
 |--------------------------------------------------------------------------
 */
-foreach ($config['singletons'] as $class) {
+foreach (config('container.singletons', []) as $class) {
     $container->singleton($class);
 }
 
@@ -20,7 +20,7 @@ foreach ($config['singletons'] as $class) {
 | Register Bindings
 |--------------------------------------------------------------------------
 */
-foreach ($config['bindings'] as $abstract => $concrete) {
+foreach (config('container.bindings', []) as $abstract => $concrete) {
     $container->bind($abstract, $concrete);
 }
 

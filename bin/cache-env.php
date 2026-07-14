@@ -1,6 +1,8 @@
 <?php
+// Not use anymore
+
 // Command: php bin/cache-env.php
-require_once __DIR__ . '/../vendor/autoload.php';
+/* require_once __DIR__ . '/../vendor/autoload.php';
 
 use Symfony\Component\Dotenv\Dotenv;
 
@@ -38,5 +40,5 @@ function castEnvValue($value)
     if (is_numeric($value)) return (float) $value;
 
     return $value; // default: string
-}
+} */
 
