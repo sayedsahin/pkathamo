@@ -11,7 +11,7 @@ return [
     | redis: use for multiple servers or containers.
     | apcu/memcached: optional single-server stores.
     */
-    'driver' => env('RATE_LIMIT_STORE', 'file'),
+    'driver' => env('RATE_LIMIT_STORE', 'apcu'),
 
     'prefix' => env(
         'RATE_LIMIT_PREFIX',
@@ -35,7 +35,7 @@ return [
     ],
 
     'sensitive_routes' => [
-        'max_attempts' => 5,
+        'max_attempts' => 20,
         'window_seconds' => 60,
         'routes' => [
             'POST /login',

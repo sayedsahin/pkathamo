@@ -6,10 +6,12 @@ namespace App\Middlewares;
 
 use App\Supports\RateLimiter;
 use App\Supports\RateLimitResult;
+use App\Systems\Middleware\MiddlewareInterface;
+use App\Systems\Response;
 
 final class RateLimit implements MiddlewareInterface
 {
-    public function handle(): void
+    public function handle(): ?Response
     {
         [$key, $maxAttempts, $windowSeconds] = $this->policy();
 
@@ -19,21 +21,20 @@ final class RateLimit implements MiddlewareInterface
             $windowSeconds
         );
 
+        if (!$result->allowed()) {
+            return $this->reject($result);
+        }
+
         $this->sendHeaders($result);
 
-        if (!$result->allowed()) {
-            $this->reject($result);
-        }
+        return null;
     }
 
     private function policy(): array
     {
         $method = strtoupper(request()->method());
 
-        $path = '/' . trim(
-            request()->path(),
-            '/'
-        );
+        $path = request()->path();
 
         $signature = $method . ' ' . $path;
 
@@ -134,38 +135,34 @@ final class RateLimit implements MiddlewareInterface
         header('X-RateLimit-Reset: ' . $result->resetAt());
     }
 
-    private function reject(RateLimitResult $result): void
+    private function reject(RateLimitResult $result): Response
     {
-        http_response_code(429);
+        $retryAfter = max(
+            1,
+            $result->retryAfter()
+        );
 
-        if (!headers_sent()) {
-            header(
-                'Retry-After: '
-                . max(1, $result->retryAfter())
-            );
-        }
+        $headers = [
+            'Retry-After' => (string) $retryAfter,
+            'X-RateLimit-Limit' => (string) $result->limit(),
+            'X-RateLimit-Remaining' => (string) $result->remaining(),
+            'X-RateLimit-Reset' => (string) $result->resetAt(),
+        ];
 
         if (is_api_request()) {
-            if (!headers_sent()) {
-                header(
-                    'Content-Type: application/json; charset=utf-8'
-                );
-            }
-
-            echo json_encode(
-                [
+            return response()
+                ->json([
                     'error' => 'Too many requests',
-                    'retry_after' => max(
-                        1,
-                        $result->retryAfter()
-                    ),
-                ],
-                JSON_UNESCAPED_SLASHES
-            );
-        } else {
-            echo 'Too many requests. Please try again later.';
+                    'retry_after' => $retryAfter,
+                ], 429)
+                ->headers($headers);
         }
-
-        exit;
+        
+        return response()
+            ->html(
+                'Too many requests. Please try again later.',
+                429
+            )
+            ->headers($headers);
     }
 }

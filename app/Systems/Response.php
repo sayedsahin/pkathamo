@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Systems;
 
 class Response
@@ -11,33 +13,54 @@ class Response
     public function __construct(string $content = '', int $status = 200)
     {
         $this->content = $content;
-        $this->status  = $status;
+        $this->status = $status;
     }
 
-    public function header(string $key, string $value): self
+    public function header(string $key, string $value): static
     {
         $this->headers[$key] = $value;
+
         return $this;
     }
 
-    public function status(int $status): self
+    public function headers(array $headers): static
+    {
+        foreach ($headers as $key => $value) {
+            $this->header($key, $value);
+        }
+
+        return $this;
+    }
+
+    public function status(int $status): static
     {
         $this->status = $status;
+
         return $this;
     }
 
-    // response json
-    public function json($data, int $status = 200): self
+    public function json(mixed $data, int $status = 200): static
     {
-        $this->content = json_encode($data);
+        $this->content = json_encode($data, JSON_THROW_ON_ERROR);
         $this->status = $status;
-        $this->header('Content-Type', 'application/json');
+        $this->headers['Content-Type'] = 'application/json; charset=utf-8';
+
         return $this;
     }
 
-    /* -----------------------
-       Getters for Async Support
-    ----------------------- */
+    public function html(string $content, int $status = 200): static
+    {
+        $this->content = $content;
+        $this->status = $status;
+        $this->headers['Content-Type'] = 'text/html; charset=utf-8';
+
+        return $this;
+    }
+
+    public function redirect(string $url = '', int $status = 302, array $headers = []): ResponseRedirect
+    {
+        return new ResponseRedirect($url, $status, $headers);
+    }
 
     public function getStatus(): int
     {
@@ -54,16 +77,12 @@ class Response
         return $this->content;
     }
 
-    /* -----------------------
-       Send to Output Buffer
-    ----------------------- */
-
     public function send(): void
     {
         http_response_code($this->status);
 
-        foreach ($this->headers as $k => $v) {
-            header("$k: $v");
+        foreach ($this->headers as $key => $value) {
+            header($key . ': ' . $value);
         }
 
         echo $this->content;

@@ -6,6 +6,7 @@ final class Validator
     private array $data;
     private array $errors = [];
     private array $nullable = [];
+    private array $validatedFields = [];
     private bool $stopOnFirstFailure = false;
 
     public static function make(array $data): self
@@ -34,7 +35,13 @@ final class Validator
 
     private function fields(string|array $fields): array
     {
-        return is_array($fields) ? $fields : [$fields];
+        $fields = is_array($fields)? $fields : [$fields];
+
+        foreach ($fields as $field) {
+            $this->validatedFields[$field] = true;
+        }
+
+        return $fields;
     }
 
     private function has(string $field): bool
@@ -81,7 +88,15 @@ final class Validator
             throw new ValidationException($this->errors);
         }
 
-        return $this->data;
+        $validated = [];
+
+        foreach (array_keys($this->validatedFields) as $field) {
+            if ($this->has($field)) {
+                $validated[$field] = $this->data[$field];
+            }
+        }
+
+        return $validated;
     }
 
     /* ===============================
@@ -169,7 +184,7 @@ final class Validator
 
             if ($v === null && $this->isNullable($field)) continue;
 
-            if (strlen((string)$v) < $min) {
+            if (mb_strlen((string)$v) < $min) {
                 $this->error($field, "Minimum {$min} characters.");
             }
         }
@@ -183,7 +198,7 @@ final class Validator
 
             if ($v === null && $this->isNullable($field)) continue;
 
-            if (strlen((string)$v) > $max) {
+            if (mb_strlen((string)$v) > $max) {
                 $this->error($field, "Maximum {$max} characters.");
             }
         }
@@ -205,15 +220,17 @@ final class Validator
     }
 
     public function confirmed(string $field): self
-    {
-        $confirm = $field . '_confirmation';
+	{
+		$this->validatedFields[$field] = true;
 
-        if ($this->value($field) !== $this->value($confirm)) {
-            $this->error($field, 'Confirmation mismatch.');
-        }
+		$confirm = $field . '_confirmation';
 
-        return $this;
-    }
+		if ($this->value($field) !== $this->value($confirm)) {
+			$this->error($field, 'Confirmation mismatch.');
+		}
+
+		return $this;
+	}
 
     public function sometimes(string $field, callable $callback): self
     {

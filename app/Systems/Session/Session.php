@@ -52,4 +52,9 @@ final class Session
     {
         self::driver()->destroy();
     }
+
+    public static function flush(): void
+    {
+        self::driver()->flush();
+    }
 }

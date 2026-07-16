@@ -11,11 +11,8 @@ switch ($config['driver']) {
         $driver = new NativeSession($config);
         break;
 
-    case 'file':
+    case 'null':
         $driver = new NullSession($config); // change to FileSession
-        break;
-    case 'redis':
-        $driver = new NullSession($config); // change to RedisSession
         break;
 
     default:
@@ -23,4 +20,3 @@ switch ($config['driver']) {
 }
 
 Session::setDriver($driver);
-// when request complete use NullSession in your controller to avoid session blocking. Session::setDriver(new NullSession());

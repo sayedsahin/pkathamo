@@ -1,6 +1,5 @@
 <?php
 
-use App\Systems\Redirect;
 use App\Systems\Session\Session;
 use App\Systems\Request;
 use App\Systems\Response;
@@ -15,19 +14,6 @@ if (!function_exists('request')) {
 		}
 
 		return $req;
-
-		// Async Safe
-		// $request = RequestContext::get('http.request');
-
-		// if ($request instanceof Request) {
-		// 	return $request;
-		// }
-
-		// $request = Request::capture();
-
-		// RequestContext::set('http.request', $request);
-
-		// return $request;
 	}
 }
 
@@ -110,12 +96,6 @@ if (!function_exists('show_flash')) {
 	}
 }
 
-if (!function_exists('redirect')) {
-	function redirect(string $link = '', array $with = [])
-	{
-		return new Redirect($link, $with);
-	}
-}
 
 function is_ajax(): bool
 {
@@ -148,8 +128,9 @@ function is_ajax(): bool
 //     );
 // }
 
-function is_api_request(): bool
+/* function is_api_request(): bool
 {
+	
 	$uri = $_SERVER['REQUEST_URI'] ?? '';
 
 	if (str_starts_with($uri, '/api')) {
@@ -164,4 +145,12 @@ function is_api_request(): bool
 	}
 
 	return false;
+} */
+
+function is_api_request(): bool
+{
+    $path = request()->path();
+
+    return $path === '/api'
+        || str_starts_with($path, '/api/');
 }

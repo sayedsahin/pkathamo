@@ -12,7 +12,7 @@
 	<p>Welcome to the site. This is a simple home page.</p>
 
 	<?php if (!empty($users) && is_array($users)): ?>
-		<h3>First User</h3>
+		<h3>My Info</h3>
 		<ul>
 			<?php foreach ($users as $user): ?>
 				<li><?= e($user->name ?? $user['name'] ?? '') ?></li>

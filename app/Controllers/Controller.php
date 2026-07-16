@@ -1,26 +1,41 @@
 <?php
+
+declare(strict_types=1);
+
 namespace App\Controllers;
+
+use App\Systems\Middleware\MiddlewareKernel;
+use App\Systems\Response;
 
 abstract class Controller
 {
     /**
-     * Execute a middleware immediately
+     * Execute one middleware immediately.
      */
-    protected function middleware(string $middlewareClass): void
+    protected function middleware(string|array $middleware): void
     {
-        // Safety check
-        if (!class_exists($middlewareClass)) {
-            throw new \RuntimeException("Middleware not found: {$middlewareClass}");
-        }
+        $response = MiddlewareKernel::handle([
+            $middleware,
+        ]);
 
-        $middleware = new $middlewareClass();
-        $middleware->handle();
+        if ($response instanceof Response) {
+            $response->send();
+            exit;
+        }
     }
 
+    /**
+     * Execute multiple middleware immediately.
+     */
     protected function middlewares(array $middlewares): void
     {
-        foreach ($middlewares as $middleware) {
-            $this->middleware($middleware);
+        $response = MiddlewareKernel::handle(
+            $middlewares
+        );
+
+        if ($response instanceof Response) {
+            $response->send();
+            exit;
         }
     }
 }

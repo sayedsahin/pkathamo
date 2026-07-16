@@ -6,18 +6,20 @@ use App\Systems\Session\Session;
 use App\Systems\Session\RememberToken;
 use App\Systems\Session\Cookie;
 use App\Supports\Auth;
+use App\Systems\Middleware\MiddlewareInterface;
+use App\Systems\Response;
 
 final class RememberMe implements MiddlewareInterface
 {
-    public function handle(): void
+    public function handle(): ?Response
     {
         if (Session::get('auth_user_id')) {
-            return;
+            return null;
         }
 
         $raw = Cookie::get('remember_token');
         if (!$raw) {
-            return;
+            return null;
         }
 
         $hash = hash('sha256', $raw);
@@ -28,12 +30,12 @@ final class RememberMe implements MiddlewareInterface
 
         if (!$row) {
             Cookie::forget('remember_token');
-            return;
+            return null;
         }
 
         if ($row->user_agent !== $_SERVER['HTTP_USER_AGENT']) {
             Cookie::forget('remember_token');
-            return;
+            return null;
         }
 
         Session::regenerate();
@@ -48,5 +50,6 @@ final class RememberMe implements MiddlewareInterface
         ]);
 
         Cookie::set('remember_token', $new['raw'], 86400 * 30);
+        return null;
     }
 }

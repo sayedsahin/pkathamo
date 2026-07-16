@@ -58,7 +58,7 @@ require ROOT_PATH . '/bootstrap/container.php';
 | Middleware Kernel (Headers, Auth, CSRF, etc.)
 |--------------------------------------------------------------------------
 */
-$kernel = new \App\Systems\MiddlewareKernel();
+$kernel = new \App\Systems\Middleware\MiddlewareKernel();
 
 $kernel->web(config('middleware.web'));
 $kernel->api(config('middleware.api'));
@@ -70,7 +70,7 @@ $kernel->run($isApi);
 | Route Dispatch
 |--------------------------------------------------------------------------
 */
-require ROOT_PATH . '/app/Systems/FastRoute.php';
+require ROOT_PATH . '/bootstrap/router.php';
 
 
 

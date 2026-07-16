@@ -4,6 +4,8 @@ namespace App\Middlewares;
 
 use App\Supports\Auth;
 use App\Supports\Role;
+use App\Systems\Middleware\MiddlewareInterface;
+use App\Systems\Response;
 
 class RoleMiddleware implements MiddlewareInterface
 {
@@ -14,16 +16,29 @@ class RoleMiddleware implements MiddlewareInterface
         $this->roles = $roles;
     }
 
-    public function handle(): void
+    public function handle(): ?Response
     {
+        $isApi = is_api_request();
         if (!Auth::check()) {
-            http_response_code(401);
-            exit('Unauthorized');
+            if ($isApi) {
+                return response()->json([
+                    'error' => 'Unauthorized',
+                ], 401);
+            }
+
+            return response()->html('Unauthorized', 401);
         }
 
         if (!Role::any($this->roles)) {
-            http_response_code(403);
-            exit('Forbidden');
+            if ($isApi) {
+                return response()->json([
+                    'error' => 'Unauthorized',
+                ], 401);
+            }
+
+            return response()->html('Forbidden', 403);
         }
+
+        return null;
     }
 }

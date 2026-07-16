@@ -85,7 +85,7 @@ final class Request
         return $this->rawBody;
     }
 
-    public function json(string $key = null, mixed $default = null): mixed
+    public function json(?string $key = null, mixed $default = null): mixed
     {
         $body = $this->getRawBody();
         $data = json_decode($body, true);
@@ -118,7 +118,16 @@ final class Request
     public function path(): string
     {
         $uri = $this->server['REQUEST_URI'] ?? '/';
-        return strtok($uri, '?') ?: '/';
+
+        $path = parse_url($uri, PHP_URL_PATH);
+
+        if (!is_string($path) || $path === '') {
+            $path = '/';
+        }
+
+        $path = rawurldecode($path);
+
+        return '/' . trim($path, '/');
     }
 
     public function fullUrl(): string

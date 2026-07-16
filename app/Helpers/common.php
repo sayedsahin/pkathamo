@@ -3,6 +3,7 @@
 use App\Models\DB;
 use App\Supports\Role;
 use App\Systems\Cache\Cache;
+use App\Systems\Database;
 use App\Systems\Session\Session;
 
 if (!function_exists('cache')) {
@@ -15,7 +16,15 @@ if (!function_exists('cache')) {
 if (!function_exists('db')) {
     function db(): DB
     {
-        return new DB();
+        global $container;
+
+        static $database = null;
+
+        $database ??= $container->make(
+            Database::class
+        );
+
+        return new DB($database);
     }
 }
 

@@ -6,8 +6,15 @@ use App\Controllers\HomeController;
 use App\Middlewares\Authenticated;
 use App\Middlewares\BearerAuth;
 use App\Middlewares\Guest;
+use App\Middlewares\RateLimit;
+use App\Middlewares\RoleMiddleware;
+use App\Middlewares\WebHeaders;
 
-// Example-Router: $route->get('/', ['ClassName::class', 'method', [Middleware::class]]);
+/**
+ * @var FastRoute\RouteCollector $route
+ */
+
+// $route->get('/', ['ClassName::class', 'method', [Middleware::class, [RoleMiddleware::class, ['admin', 'user']]]]); //Example-Router:
 
 $route->get('/', [HomeController::class, 'index']);
 $route->get('/login', [AuthController::class, 'login', [Guest::class]]);
@@ -17,6 +24,10 @@ $route->post('/register', [AuthController::class, 'registrationProcess']);
 $route->get('/logout', [AuthController::class, 'logout', [Authenticated::class]]);
 
 // API Routes (Token-based auth for React/Vue)
+$route->get('/api/home', [HomeController::class, 'apiIndex', [
+    BearerAuth::class,
+    [RoleMiddleware::class, ['user']]
+]]);
 $route->post('/api/auth/login', [ApiAuthController::class, 'login']);
 $route->post('/api/auth/register', [ApiAuthController::class, 'register']);
 $route->post('/api/auth/forgot', [ApiAuthController::class, 'forgot']);

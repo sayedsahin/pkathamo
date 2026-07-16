@@ -2,9 +2,12 @@
 
 namespace App\Middlewares;
 
+use App\Systems\Middleware\MiddlewareInterface;
+use App\Systems\Response;
+
 class WebHeaders implements MiddlewareInterface
 {
-    public function handle(): void
+    public function handle(): ?Response
     {
         header('X-Frame-Options: SAMEORIGIN');
         header('X-Content-Type-Options: nosniff');
@@ -18,5 +21,7 @@ class WebHeaders implements MiddlewareInterface
                 "img-src 'self' data:; " .
                 "connect-src 'self' https://cdn.jsdelivr.net;"
         );
+
+        return null;
     }
 }

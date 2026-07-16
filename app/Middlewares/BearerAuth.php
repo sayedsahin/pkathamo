@@ -4,27 +4,29 @@ namespace App\Middlewares;
 
 use App\Models\DB;
 use App\Supports\Auth;
+use App\Systems\Middleware\MiddlewareInterface;
+use App\Systems\Response;
 
 class BearerAuth implements MiddlewareInterface
 {
-    public function handle(): void
+    public function handle(): ?Response
     {
         $header = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
 
         if (!str_starts_with($header, 'Bearer ')) {
-            http_response_code(401);
-            header('WWW-Authenticate: Bearer');
-            echo json_encode(['error' => 'Unauthorized']);
-            exit;
+            return response()
+                ->header('WWW-Authenticate', 'Bearer')
+                ->json(['error' => 'Unauthorized'], 401);
         }
 
         $token = substr($header, 7);
 
         if (!$this->validate($token)) {
-            http_response_code(401);
-            echo json_encode(['error' => 'Invalid token']);
-            exit;
+            return response()
+                ->json(['error' => 'Invalid token'], 401);
         }
+
+        return null;
     }
 
     private function validate(string $token): bool
