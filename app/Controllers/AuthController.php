@@ -49,7 +49,6 @@ class AuthController extends Controller
 			// $data['email']
 			// $data['password']
 
-			// dd($data);
 		} catch (\App\Validation\ValidationException $e) {
 			$errors = $e->errors();
 			return response()->redirect()->with(['errors' => $errors])->back();
@@ -113,7 +112,7 @@ class AuthController extends Controller
 		|-----------------------------------------------------------
 		*/
 		$request = request();
-		// dd($request->all());
+
 		$validator = Validator::make($request->all())
 			->required(['name', 'username', 'email', 'password', 'password_confirmation'])
 			->string(['name', 'username', 'email', 'password', 'password_confirmation'])

@@ -12,6 +12,20 @@ final class FileCache implements CacheInterface
     public function __construct(string $path)
     {
         $this->path = rtrim($path, '/');
+
+        if (!is_dir($path) && !mkdir($path, 0775, true) && !is_dir($path)) {
+            throw new \RuntimeException(
+                "Unable to create cache directory: {$path}"
+            );
+        }
+
+        if (!is_writable($path)) {
+            throw new \RuntimeException(
+                "Cache directory is not writable: {$path}"
+            );
+        }
+
+        $this->path = $path;
     }
 
     private function file(string $key): string
@@ -51,7 +65,9 @@ final class FileCache implements CacheInterface
 
     public function has(string $key): bool
     {
-        return $this->get($key, '__missing__') !== '__missing__';
+        $missing = new \stdClass();
+
+        return $this->get($key, $missing) !== $missing;
     }
 
     public function forget(string $key): void

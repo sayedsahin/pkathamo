@@ -76,23 +76,24 @@ if (!function_exists('back')) {
 if (!function_exists('show_flash')) {
 	function show_flash()
 	{
-		if (!empty($_SESSION['flash'])) {
-			$msg = Session::get("flash");
-			if (!empty($msg['errors'])) {
-				echo "<div class='alert alert-danger'>";
-				foreach ($msg as $key => $value) {
-					foreach ($value as $k => $val) {
-						echo "* " . $val . " (" . $k . ")<br>";
-					}
-				}
-				echo "</div>";
-			} elseif (!empty($msg['error'])) {
-				echo "<div class='alert alert-danger'>" . $msg['error'] . "</div>";
-			} else {
-				echo "<div class='alert alert-success'>" . $msg['success'] . "</div>";
-			}
-			unset($_SESSION['flash']);
+		$msg = Session::get("flash");
+		if (!$msg) {
+			return;
 		}
+		if (!empty($msg['errors'])) {
+			echo "<div class='alert alert-danger'>";
+			foreach ($msg as $key => $value) {
+				foreach ($value as $k => $val) {
+					echo "* " . $val . " (" . $k . ")<br>";
+				}
+			}
+			echo "</div>";
+		} elseif (!empty($msg['error'])) {
+			echo "<div class='alert alert-danger'>" . e($msg['error']) . "</div>";
+		} else {
+			echo "<div class='alert alert-success'>" . e($msg['success']) . "</div>";
+		}
+		Session::forget('flash');
 	}
 }
 

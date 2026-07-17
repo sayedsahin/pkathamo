@@ -34,7 +34,9 @@ final class ArrayCache implements CacheInterface
 
     public function has(string $key): bool
     {
-        return $this->get($key, '__missing__') !== '__missing__';
+        $missing = new \stdClass();
+
+        return $this->get($key, $missing) !== $missing;
     }
 
     public function forget(string $key): void

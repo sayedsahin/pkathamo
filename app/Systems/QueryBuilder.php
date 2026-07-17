@@ -183,6 +183,7 @@ class QueryBuilder
         return $this;
     }
 
+    // no need to use limit in first() because first return only one item
     public function limit(int $limit, ?int $offset = null): self
     {
         $this->limit = " LIMIT $limit";
@@ -454,10 +455,10 @@ class QueryBuilder
 
     public function value(string $column): mixed
     {
-        $this->select($column);
+        $this->select("$column AS __value");
 
         $row = $this->first();
 
-        return $row ? ($row->{$column} ?? null) : null;
+        return $row?->__value;
     }
 }

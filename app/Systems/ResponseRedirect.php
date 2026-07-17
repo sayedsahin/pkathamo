@@ -53,6 +53,12 @@ final class ResponseRedirect extends Response
         return $this->to($fallback);
     }
 
+    public function away(string $url): self
+    {
+        $this->headers['Location'] = $url;
+        return $this;
+    }
+
     private function resolveUrl(string $url): string
     {
         if (

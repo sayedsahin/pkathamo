@@ -12,7 +12,6 @@ class Guest implements MiddlewareInterface
     public function handle(): ?Response
     {
         if (Auth::check()) {
-            // dd('You are already logged in. Redirecting to home page...');
             return response()->redirect('/');
         }
 

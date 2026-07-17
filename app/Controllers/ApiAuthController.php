@@ -41,7 +41,7 @@ class ApiAuthController extends Controller
         }
 
         // Generate API token
-        $token = bin2hex(random_bytes(40));
+        $token = bin2hex(random_bytes(32));
         db()->table('api_tokens')->insert([
             'user_id' => $user->id,
             'token' => hash('sha256', $token),
@@ -90,13 +90,15 @@ class ApiAuthController extends Controller
             return response()->json(['error' => $error], 422);
         }
 
+        $verification_token = bin2hex(random_bytes(32));
+		$tokenHash = hash('sha256', $verification_token);
         // Create user
         $userData = [
             'name' => $data['name'],
             'username' => $data['username'],
             'email' => $data['email'],
             'password' => password_hash($data['password'], PASSWORD_DEFAULT),
-            'verification_token' => bin2hex(random_bytes(32)),
+            'verification_token' => $tokenHash,
             'email_verified' => 0,
             'created_at' => date('Y-m-d H:i:s')
         ];
@@ -139,8 +141,10 @@ class ApiAuthController extends Controller
         }
 
         $resetToken = bin2hex(random_bytes(32));
+		$tokenHash = hash('sha256', $resetToken);
+
         db()->table('users')->where('id', $user->id)->update([
-            'reset_token' => $resetToken,
+            'reset_token' => $tokenHash,
             'reset_expires' => date('Y-m-d H:i:s', time() + 3600) // 1 hour
         ]);
 
@@ -155,7 +159,8 @@ class ApiAuthController extends Controller
 
     public function verify($token)
     {
-        $user = db()->table('users')->where('verification_token', $token)->first();
+        $tokenHash = hash('sha256', $token);
+        $user = db()->table('users')->where('verification_token', $tokenHash)->first();
 
         if (!$user) {
             return response()->json(['error' => 'Invalid verification token'], 400);

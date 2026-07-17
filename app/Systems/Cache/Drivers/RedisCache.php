@@ -38,9 +38,8 @@ final class RedisCache implements CacheInterface
             $redis->auth($this->config['password']);
         }
 
-        if (isset($this->config['db'])) {
-            $redis->select((int) $this->config['db']);
-        }
+            $cache_db = (int) ($this->config['cache_db'] ?? $this->config['db'] ?? 0);
+            $redis->select($cache_db);
 
         return $this->redis = $redis;
     }

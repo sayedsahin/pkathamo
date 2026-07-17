@@ -4,5 +4,6 @@
 *.ini
 .env
 # /public
-/storage/cache/*
+/storage/cache/**/*
+!/storage/cache/*.md
 /vendor

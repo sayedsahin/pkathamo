@@ -114,7 +114,8 @@ final class Validator
     public function required(string|array $fields): self
     {
         foreach ($this->fields($fields) as $field) {
-            if (! $this->has($field) || $this->value($field) === '') {
+            $value = $this->value($field);
+            if (! $this->has($field) || $value === '' || $value === null) {
                 $this->error($field, 'This field is required.');
             }
         }
