@@ -52,23 +52,4 @@ return [
         'stale_after_seconds' => 86400,
         'cleanup_delete_limit' => 100,
     ],
-
-    // 'redis' => [
-    //     'host' => env('REDIS_HOST', '127.0.0.1'),
-    //     'port' => env('REDIS_PORT', 6379),
-    //     'username' => env('REDIS_USERNAME', null),
-    //     'password' => env('REDIS_PASSWORD', null),
-    //     'database' => env('REDIS_RATE_LIMIT_DB', 2),
-    //     'timeout' => env('REDIS_TIMEOUT', 2.0),
-    //     'read_timeout' => env(
-    //         'REDIS_READ_TIMEOUT',
-    //         2.0
-    //     ),
-    // ],
-
-    // 'memcached' => [
-    //     'host' => env('MEMCACHED_HOST', '127.0.0.1'),
-    //     'port' => env('MEMCACHED_PORT', 11211),
-    //     'connect_timeout' => env('MEMCACHED_CONNECT_TIMEOUT', 2000),
-    // ],
 ];

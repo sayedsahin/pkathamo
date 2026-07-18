@@ -11,21 +11,22 @@ final class Database
 
     public function __construct()
     {
+        $db_config = config('database.connections.mysql');
         try {
-            $dsn = config('database.connections.mysql.driver')
-                . ":host=" . config('database.connections.mysql.host')
-                . ";port=" . config('database.connections.mysql.port')
-                . ";dbname=" . config('database.connections.mysql.database')
-                . ";charset=". config('database.connections.mysql.charset', 'utf8mb4');
+            $dsn = $db_config['driver']
+                . ":host=" . $db_config['host']
+                . ";port=" . $db_config['port']
+                . ";dbname=" . $db_config['database']
+                . ";charset=". $db_config['charset'] ?? 'utf8mb4';
 
             $this->pdo = new PDO(
                 $dsn,
-                config('database.connections.mysql.username'),
-                config('database.connections.mysql.password'),
+                $db_config['username'],
+                $db_config['password'],
                 [
                     PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
                     PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-                    PDO::ATTR_PERSISTENT         => config('database.connections.mysql.options.persistent', true),
+                    PDO::ATTR_PERSISTENT         => $db_config['options']['persistent'],
                 ]
             );
 
