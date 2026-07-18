@@ -39,23 +39,11 @@ LUA;
         }
 
         $this->redis = new Redis();
-
-        $host = (string) config(
-            'rate_limit.redis.host',
-            '127.0.0.1'
-        );
-        $port = (int) config(
-            'rate_limit.redis.port',
-            6379
-        );
-        $timeout = (float) config(
-            'rate_limit.redis.timeout',
-            2.0
-        );
-        $readTimeout = (float) config(
-            'rate_limit.redis.read_timeout',
-            2.0
-        );
+        $redis_config = config('database.redis');
+        $host = (string) $redis_config['host'];
+        $port = (int) $redis_config['port'];
+        $timeout = (float) $redis_config['timeout'];
+        $readTimeout = (float) $redis_config['read_timeout'];
 
         try {
             if (!$this->redis->connect($host, $port, $timeout)) {
@@ -71,8 +59,8 @@ LUA;
                 );
             }
 
-            $username = config('rate_limit.redis.username');
-            $password = config('rate_limit.redis.password');
+            $username = $redis_config['username'];
+            $password = $redis_config['password'];
 
             if ($password !== null && $password !== '') {
                 $credentials = (
@@ -89,10 +77,7 @@ LUA;
                 }
             }
 
-            $database = (int) config(
-                'rate_limit.redis.database',
-                0
-            );
+            $database = (int) $redis_config['rate_limit_db'];
 
             if (!$this->redis->select($database)) {
                 throw new RuntimeException(

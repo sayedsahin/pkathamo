@@ -8,9 +8,16 @@ final class Config
 {
     private static array $items = [];
 
+    private static array $resolved = [];
+
+
+    private static array $missing = [];
+
     public static function load(array $items): void
     {
         self::$items = $items;
+
+        self::clearMemo();
     }
 
     public static function all(): array
@@ -20,37 +27,70 @@ final class Config
 
     public static function has(string $key): bool
     {
-        $segments = explode('.', $key);
+        $value = null;
+
+        return self::resolve($key, $value);
+    }
+
+    public static function get(string $key, mixed $default = null): mixed
+    {
+        $resolved = null;
+
+        if (self::resolve($key, $resolved)) {
+            return $resolved;
+        }
+
+        return value($default);
+    }
+
+    public static function set(string $key, mixed $value): void
+    {
+        self::write($key, $value);
+
+        self::clearMemo();
+    }
+
+    public static function setMany(array $values): void
+    {
+        foreach ($values as $key => $value) {
+            self::write((string) $key, $value);
+        }
+
+        self::clearMemo();
+    }
+
+    private static function resolve(string $key, mixed &$result): bool
+    {
+
+        if (array_key_exists($key,self::$resolved)) {
+            $result = self::$resolved[$key];
+            return true;
+        }
+
+
+        if (isset(self::$missing[$key])) {
+            return false;
+        }
+
         $value = self::$items;
 
-        foreach ($segments as $segment) {
+        foreach (explode('.', $key) as $segment) {
             if (!is_array($value) || !array_key_exists($segment, $value)) {
+                self::$missing[$key] = true;
+
                 return false;
             }
 
             $value = $value[$segment];
         }
 
+        self::$resolved[$key] = $value;
+        $result = $value;
+
         return true;
     }
 
-    public static function get(string $key, mixed $default = null): mixed
-    {
-        $segments = explode('.', $key);
-        $value = self::$items;
-
-        foreach ($segments as $segment) {
-            if (!is_array($value) || !array_key_exists($segment, $value)) {
-                return value($default);
-            }
-
-            $value = $value[$segment];
-        }
-
-        return $value;
-    }
-
-    public static function set(string $key, mixed $value): void
+    private static function write(string $key, mixed $value): void
     {
         $segments = explode('.', $key);
         $items = &self::$items;
@@ -66,10 +106,9 @@ final class Config
         $items = $value;
     }
 
-    public static function setMany(array $values): void
+    private static function clearMemo(): void
     {
-        foreach ($values as $key => $value) {
-            self::set((string) $key, $value);
-        }
+        self::$resolved = [];
+        self::$missing = [];
     }
 }

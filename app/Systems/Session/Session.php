@@ -57,4 +57,9 @@ final class Session
     {
         self::driver()->flush();
     }
+
+    public static function close(): void
+    {
+        self::driver()->close();
+    }
 }

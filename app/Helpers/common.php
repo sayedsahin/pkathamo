@@ -9,7 +9,9 @@ use App\Systems\Session\Session;
 if (!function_exists('cache')) {
     function cache(): Cache
     {
-        return new Cache;
+        static $cache;
+
+        return $cache ??= new Cache();
     }
 }
 

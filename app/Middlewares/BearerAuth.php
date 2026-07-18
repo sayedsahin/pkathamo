@@ -1,48 +1,47 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Middlewares;
 
-use App\Models\DB;
 use App\Supports\Auth;
 use App\Systems\Middleware\MiddlewareInterface;
 use App\Systems\Response;
 
-class BearerAuth implements MiddlewareInterface
+final class BearerAuth implements MiddlewareInterface
 {
     public function handle(): ?Response
     {
-        $header = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
+        $token = request()->bearerToken();
 
-        if (!str_starts_with($header, 'Bearer ')) {
+        if ($token === null) {
             return response()
                 ->header('WWW-Authenticate', 'Bearer')
-                ->json(['error' => 'Unauthorized'], 401);
+                ->json(['error' => 'Unauthorized',], 401);
         }
 
-        $token = substr($header, 7);
+        $user = $this->resolveUser($token);
 
-        if (!$this->validate($token)) {
+        if ($user === null) {
             return response()
+                ->header('WWW-Authenticate', 'Bearer')
                 ->json(['error' => 'Invalid token'], 401);
         }
 
+        Auth::once((int) $user->id, $user);
         return null;
     }
 
-    private function validate(string $token): bool
+    private function resolveUser(string $token): ?object
     {
-        $db = new DB;
         $hashed = hash('sha256', $token);
-        $record = $db->table('api_tokens')
-            ->where('token', $hashed)
-            ->where('expires_at', '>', date('Y-m-d H:i:s'))
-            ->first();
 
-        if ($record) {
-            Auth::once($record->user_id);
-            return true;
-        }
-        return false;
+        return db()
+            ->table('api_tokens AS tokens')
+            ->join('users AS users', 'users.id', '=', 'tokens.user_id')
+            ->select('users.id', 'users.name', 'users.email', 'users.username')
+            ->where('tokens.token',$hashed)
+            ->where('tokens.expires_at', '>', date('Y-m-d H:i:s'))
+            ->first();
     }
 }
-

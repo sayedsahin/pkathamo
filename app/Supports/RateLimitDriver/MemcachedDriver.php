@@ -15,37 +15,44 @@ final class MemcachedDriver implements RateLimitDriverInterface
     public function __construct()
     {
         if (!class_exists(Memcached::class)) {
-            throw new RuntimeException(
-                'PHP Memcached extension is not installed.'
-            );
+            throw new RuntimeException('PHP Memcached extension is not installed.');
         }
 
-        $this->memcached = new Memcached();
-        $this->memcached->setOption(
-            Memcached::OPT_BINARY_PROTOCOL,
-            true
-        );
+        $config = (array) config('database.memcached', []);
+        $servers = (array) ($config['servers'] ?? []);
+
+        if ($servers === []) {
+            throw new RuntimeException('No Memcached server is configured.');
+        }
+
+        $persistentId = trim((string) ($config['persistent_id'] ?? ''));
+
+        $this->memcached = $persistentId !== ''
+            ? new Memcached($persistentId)
+            : new Memcached();
+
+        $this->memcached->setOption(Memcached::OPT_BINARY_PROTOCOL, true);
         $this->memcached->setOption(
             Memcached::OPT_CONNECT_TIMEOUT,
-            (int) config(
-                'rate_limit.memcached.connect_timeout',
-                2000
-            )
+            (int) ($config['connect_timeout'] ?? 2000)
         );
 
-        $host = (string) config(
-            'rate_limit.memcached.host',
-            '127.0.0.1'
-        );
-        $port = (int) config(
-            'rate_limit.memcached.port',
-            11211
-        );
+        if (count($servers) > 1) {
+            $this->memcached->setOption(Memcached::OPT_LIBKETAMA_COMPATIBLE, true);
+        }
 
-        if (!$this->memcached->addServer($host, $port)) {
-            throw new RuntimeException(
-                "Unable to configure Memcached server {$host}:{$port}."
+        if ($this->memcached->getServerList() === []) {
+            $this->memcached->setOption(Memcached::OPT_BINARY_PROTOCOL, true);
+            $this->memcached->setOption(
+                Memcached::OPT_CONNECT_TIMEOUT,
+                (int) ($config['connect_timeout'] ?? 2000)
             );
+
+            if (count($servers) > 1) {
+                $this->memcached->setOption(Memcached::OPT_LIBKETAMA_COMPATIBLE, true);
+            }
+
+            $this->addServers($servers);
         }
     }
 
@@ -140,6 +147,35 @@ final class MemcachedDriver implements RateLimitDriverInterface
                     . $this->memcached->getResultMessage()
                 );
             }
+        }
+    }
+
+    private function addServers(array $servers): void
+    {
+        $normalized = [];
+
+        foreach ($servers as $server) {
+            $host = trim((string) ($server['host']));
+            $port = (int) ($server['port']);
+            $weight = (int) ($server['weight']);
+
+            if ($host === '') {
+                throw new RuntimeException('Memcached server host cannot be empty.');
+            }
+
+            if ($port < 1 || $port > 65535) {
+                throw new RuntimeException("Invalid Memcached server port: {$port}.");
+            }
+
+            if ($weight < 0) {
+                throw new RuntimeException('Memcached server weight cannot be negative.');
+            }
+
+            $normalized[] = [$host, $port, $weight];
+        }
+
+        if (!$this->memcached->addServers($normalized)) {
+            throw new RuntimeException('Unable to configure Memcached servers.');
         }
     }
 }

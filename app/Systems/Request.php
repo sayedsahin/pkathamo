@@ -11,8 +11,10 @@ final class Request
     private array $server;
     private array $files;
     private array $cookies;
-    private array $headers;
     private ?string $rawBody = null;
+    private ?string $resolvedPath = null;
+    private bool $jsonParsed = false;
+    private array $jsonBody = [];
 
     private function __construct(
         array $get,
@@ -26,7 +28,6 @@ final class Request
         $this->server  = $server;
         $this->files   = $files;
         $this->cookies = $cookies;
-        $this->headers = $this->parseHeaders($server);
     }
 
     public static function capture(): self
@@ -87,18 +88,25 @@ final class Request
 
     public function json(?string $key = null, mixed $default = null): mixed
     {
-        $body = $this->getRawBody();
-        $data = json_decode($body, true);
+        if (!$this->jsonParsed) {
+            $decoded = json_decode(
+                $this->getRawBody(),
+                true
+            );
 
-        if (!is_array($data)) {
-            $data = [];
+            $this->jsonBody = is_array($decoded)
+                ? $decoded
+                : [];
+
+            $this->jsonParsed = true;
         }
 
         if ($key === null) {
-            return $data;
+            return $this->jsonBody;
         }
 
-        return $data[$key] ?? $default;
+        return $this->jsonBody[$key]
+            ?? $default;
     }
 
     /* -----------------------
@@ -117,6 +125,10 @@ final class Request
 
     public function path(): string
     {
+        if ($this->resolvedPath !== null) {
+            return $this->resolvedPath;
+        }
+
         $uri = $this->server['REQUEST_URI'] ?? '/';
 
         $path = parse_url($uri, PHP_URL_PATH);
@@ -127,7 +139,7 @@ final class Request
 
         $path = rawurldecode($path);
 
-        return '/' . trim($path, '/');
+        return $this->resolvedPath = '/' . trim($path, '/');
     }
 
     public function fullUrl(): string
@@ -163,37 +175,49 @@ final class Request
         return TrustedProxy::isSecureRequest($this->server);
     }
 
-    /* -----------------------
-       Headers
-    ----------------------- */
-
-    private function parseHeaders(array $server): array
-    {
-        $headers = [];
-
-        foreach ($server as $key => $value) {
-            if (str_starts_with($key, 'HTTP_')) {
-                $name = str_replace('_', '-', substr($key, 5));
-                $headers[strtolower($name)] = $value;
-            }
-        }
-
-        return $headers;
-    }
-
     public function header(string $key, mixed $default = null): mixed
     {
-        return $this->headers[strtolower($key)] ?? $default;
+        $key = strtoupper(str_replace('-', '_', trim($key)));
+
+        if ($key === '') {
+            return $default;
+        }
+
+        /*
+        * Apache/FastCGI in some configurations
+        * Authorization can be in either of these two keys.
+        */
+        if ($key === 'AUTHORIZATION') {
+            return $this->server['HTTP_AUTHORIZATION']
+                ?? $this->server['REDIRECT_HTTP_AUTHORIZATION']
+                ?? $default;
+        }
+
+        /*
+        * CONTENT_TYPE and CONTENT_LENGTH are usually
+        * Without the HTTP_ prefix.
+        */
+        if ($key === 'CONTENT_TYPE' || $key === 'CONTENT_LENGTH') {
+            return $this->server[$key]
+                ?? $this->server[
+                    'HTTP_' . $key
+                ]
+                ?? $default;
+        }
+
+        return $this->server['HTTP_' . $key] ?? $default;
     }
 
     public function bearerToken(): ?string
     {
         $header = $this->header('authorization');
 
-        if ($header && str_starts_with($header, 'Bearer ')) {
-            return substr($header, 7);
+        if (!is_string($header) || strncasecmp($header, 'Bearer ', 7) !== 0) {
+            return null;
         }
 
-        return null;
+        $token = trim(substr($header, 7));
+
+        return $token !== '' ? $token : null;
     }
 }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Systems\Cache\Drivers;
 
 use App\Systems\Cache\CacheInterface;
+use RuntimeException;
 
 final class FileCache implements CacheInterface
 {
@@ -14,13 +15,13 @@ final class FileCache implements CacheInterface
         $this->path = rtrim($path, '/');
 
         if (!is_dir($path) && !mkdir($path, 0775, true) && !is_dir($path)) {
-            throw new \RuntimeException(
+            throw new RuntimeException(
                 "Unable to create cache directory: {$path}"
             );
         }
 
         if (!is_writable($path)) {
-            throw new \RuntimeException(
+            throw new RuntimeException(
                 "Cache directory is not writable: {$path}"
             );
         }
@@ -37,14 +38,44 @@ final class FileCache implements CacheInterface
     {
         $file = $this->file($key);
 
-        if (!file_exists($file)) {
+        $handle = @fopen($file, 'rb');
+
+        if ($handle === false) {
             return $default;
         }
 
-        $data = unserialize(file_get_contents($file));
+        $locked = false;
 
-        if ($data['expires'] !== 0 && $data['expires'] < time()) {
-            unlink($file);
+        try {
+            if (!flock($handle, LOCK_SH)) {
+                return $default;
+            }
+
+            $locked = true;
+            $payload = stream_get_contents($handle);
+
+        } finally {
+            if ($locked) {
+                flock($handle, LOCK_UN);
+            }
+
+            fclose($handle);
+        }
+
+        if (!is_string($payload) || $payload === '') {
+            return $default;
+        }
+
+        $data = @unserialize($payload);
+
+        if (!is_array($data) || !array_key_exists('value', $data) || !array_key_exists('expires', $data)) {
+            return $default;
+        }
+
+        $expires = (int) $data['expires'];
+
+        if ($expires !== 0 && $expires <= time()) {
+            // @unlink($file);
             return $default;
         }
 
@@ -53,14 +84,77 @@ final class FileCache implements CacheInterface
 
     public function put(string $key, mixed $value, int $ttl = 0): void
     {
-        $expires = $ttl > 0 ? time() + $ttl : 0;
+        $file = $this->file($key);
 
-        $data = serialize([
+        $payload = serialize([
             'value' => $value,
-            'expires' => $expires,
+            'expires' => $ttl > 0
+                ? time() + $ttl
+                : 0,
         ]);
 
-        file_put_contents($this->file($key), $data, LOCK_EX);
+        /*
+         * c+b don't file truncate
+         * First lock, then truncate/write
+         */
+        $handle = @fopen($file, 'c+b');
+
+        if ($handle === false) {
+            throw new RuntimeException(
+                "Unable to open cache file: {$file}"
+            );
+        }
+
+        $locked = false;
+
+        try {
+            if (!flock($handle, LOCK_EX)) {
+                throw new RuntimeException(
+                    "Unable to lock cache file: {$file}"
+                );
+            }
+
+            $locked = true;
+
+            if (!ftruncate($handle, 0) || !rewind($handle)) {
+                throw new RuntimeException(
+                    "Unable to reset cache file: {$file}"
+                );
+            }
+
+            $length = strlen($payload);
+            $written = 0;
+
+            while ($written < $length) {
+                $bytes = fwrite(
+                    $handle,
+                    substr($payload, $written)
+                );
+
+                if (
+                    $bytes === false
+                    || $bytes === 0
+                ) {
+                    throw new RuntimeException(
+                        "Unable to write cache file: {$file}"
+                    );
+                }
+
+                $written += $bytes;
+            }
+
+            if (!fflush($handle)) {
+                throw new RuntimeException(
+                    "Unable to flush cache file: {$file}"
+                );
+            }
+        } finally {
+            if ($locked) {
+                flock($handle, LOCK_UN);
+            }
+
+            fclose($handle);
+        }
     }
 
     public function has(string $key): bool
@@ -75,14 +169,14 @@ final class FileCache implements CacheInterface
         $file = $this->file($key);
 
         if (file_exists($file)) {
-            unlink($file);
+            @unlink($file);
         }
     }
 
     public function flush(): void
     {
-        foreach (glob($this->path . '/*.cache') as $file) {
-            unlink($file);
+        foreach (glob($this->path . '/*.cache') ?: [] as $file) {
+            @unlink($file);
         }
     }
 }

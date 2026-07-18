@@ -202,22 +202,23 @@ class QueryBuilder
     public function get(): array
     {
         // Full raw query
-        if ($this->rawSql) {
-            $stmt = $this->pdo->prepare($this->rawSql);
+        try {
+            if ($this->rawSql) {
+                $stmt = $this->pdo->prepare($this->rawSql);
+                $stmt->execute($this->bindings);
+                $data = $stmt->fetchAll(PDO::FETCH_OBJ);
+                return $data;
+            }
+
+            $sql = $this->toSql();
+            $stmt = $this->pdo->prepare($sql);
             $stmt->execute($this->bindings);
+
             $data = $stmt->fetchAll(PDO::FETCH_OBJ);
-            $this->reset();
             return $data;
+        } finally {
+            $this->reset();
         }
-
-        // Builder mode
-        $sql = $this->toSql();
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute($this->bindings);
-
-        $data = $stmt->fetchAll(PDO::FETCH_OBJ);
-        $this->reset();
-        return $data;
     }
 
 
@@ -225,15 +226,17 @@ class QueryBuilder
 
     public function first(): ?object
     {
-        $sql = ($this->rawSql ?: $this->toSql()) . " LIMIT 1";
+        try {
+            $sql = ($this->rawSql ?: $this->toSql()) . " LIMIT 1";
 
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute($this->bindings);
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute($this->bindings);
 
-        $result = $stmt->fetch(PDO::FETCH_OBJ) ?: null;
-
-        $this->reset();
-        return $result;
+            $result = $stmt->fetch(PDO::FETCH_OBJ) ?: null;
+            return $result;
+        } finally {
+            $this->reset();
+        }
     }
 
 
@@ -245,36 +248,42 @@ class QueryBuilder
 
     public function exists(): bool
     {
-        $sql = "SELECT EXISTS(SELECT 1 FROM {$this->table}"
-             . $this->compileWheres()
-             . ")";
+        try {
+            $sql = "SELECT EXISTS(SELECT 1 FROM {$this->table}"
+                . $this->compileWheres()
+                . ")";
 
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute($this->bindings);
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute($this->bindings);
 
-        $exists = (bool)$stmt->fetchColumn();
-        $this->reset();
+            $exists = (bool)$stmt->fetchColumn();
 
-        return $exists;
+            return $exists;
+        } finally {
+            $this->reset();
+        }
     }
 
     public function count(string $column = '*'): int
     {
-        if ($this->rawSql) {
-            $sql = "SELECT COUNT(*) AS total FROM ({$this->rawSql}) AS sub";
-        } else {
-            $sql = "SELECT COUNT({$column}) AS total FROM {$this->table}"
-                . $this->compileJoins()
-                . $this->compileWheres();
+        try {
+            if ($this->rawSql) {
+                $sql = "SELECT COUNT(*) AS total FROM ({$this->rawSql}) AS sub";
+            } else {
+                $sql = "SELECT COUNT({$column}) AS total FROM {$this->table}"
+                    . $this->compileJoins()
+                    . $this->compileWheres();
+            }
+
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute($this->bindings);
+
+            $total = (int) $stmt->fetchColumn();
+
+            return $total;
+        } finally {
+            $this->reset();
         }
-
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute($this->bindings);
-
-        $total = (int) $stmt->fetchColumn();
-        $this->reset();
-
-        return $total;
     }
 
 
@@ -285,53 +294,59 @@ class QueryBuilder
 
     public function insert(array $data, bool $returnId = false): bool|int
     {
-        $cols = array_keys($data);
-        $placeholders = [];
+        try {
+            $cols = array_keys($data);
+            $placeholders = [];
 
-        foreach ($data as $col => $val) {
-            $p = $this->param();
-            $this->bindings[$p] = $val;
-            $placeholders[] = $p;
+            foreach ($data as $col => $val) {
+                $p = $this->param();
+                $this->bindings[$p] = $val;
+                $placeholders[] = $p;
+            }
+
+            $sql = "INSERT INTO {$this->table} ("
+                . implode(', ', $cols)
+                . ") VALUES ("
+                . implode(', ', $placeholders)
+                . ")";
+
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute($this->bindings);
+
+            $id = $returnId ? (int) $this->pdo->lastInsertId() : true;
+
+            return $id;
+        } finally {
+            $this->reset();
         }
-
-        $sql = "INSERT INTO {$this->table} ("
-               . implode(', ', $cols)
-               . ") VALUES ("
-               . implode(', ', $placeholders)
-               . ")";
-
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute($this->bindings);
-
-        $id = $returnId ? (int) $this->pdo->lastInsertId() : true;
-
-        $this->reset();
-        return $id;
     }
 
 
     public function update(array $data): bool
     {
-        if (empty($this->wheres)) {
-            throw new RuntimeException("UPDATE without WHERE is forbidden!");
+        try {
+            if (empty($this->wheres)) {
+                throw new RuntimeException("UPDATE without WHERE is forbidden!");
+            }
+
+            $set = [];
+            foreach ($data as $col => $val) {
+                $p = $this->param();
+                $this->bindings[$p] = $val;
+                $set[] = "$col = $p";
+            }
+
+            $sql = "UPDATE {$this->table} SET "
+                . implode(', ', $set)
+                . $this->compileWheres();
+
+            $stmt = $this->pdo->prepare($sql);
+            $ok = $stmt->execute($this->bindings);
+
+            return $ok;
+        } finally {
+            $this->reset();
         }
-
-        $set = [];
-        foreach ($data as $col => $val) {
-            $p = $this->param();
-            $this->bindings[$p] = $val;
-            $set[] = "$col = $p";
-        }
-
-        $sql = "UPDATE {$this->table} SET "
-               . implode(', ', $set)
-               . $this->compileWheres();
-
-        $stmt = $this->pdo->prepare($sql);
-        $ok = $stmt->execute($this->bindings);
-
-        $this->reset();
-        return $ok;
     }
 
     /**
@@ -360,13 +375,16 @@ class QueryBuilder
             throw new RuntimeException("DELETE without WHERE is forbidden!");
         }
 
-        $sql = "DELETE FROM {$this->table}" . $this->compileWheres();
+        try {
+            $sql = "DELETE FROM {$this->table}" . $this->compileWheres();
 
-        $stmt = $this->pdo->prepare($sql);
-        $ok = $stmt->execute($this->bindings);
+            $stmt = $this->pdo->prepare($sql);
+            $ok = $stmt->execute($this->bindings);
 
-        $this->reset();
-        return $ok;
+            return $ok;
+        } finally {
+            $this->reset();
+        }
     }
 
 
@@ -421,6 +439,42 @@ class QueryBuilder
         return $this;
     }
 
+    public function pluck(string $column): array
+    {
+        try {
+            $this->select($column);
+
+            $sql = $this->rawSql ?: $this->toSql();
+
+            $stmt = $this->pdo->prepare($sql);
+
+            $stmt->execute($this->bindings);
+
+            return $stmt->fetchAll(PDO::FETCH_COLUMN);
+        } finally {
+            $this->reset();
+        }
+    }
+
+    public function value(string $column): mixed
+    {
+        try {
+            $this->select($column);
+
+            $sql = ($this->rawSql ?: $this->toSql()) . ' LIMIT 1';
+
+            $stmt = $this->pdo->prepare($sql);
+
+            $stmt->execute($this->bindings);
+
+            $value = $stmt->fetchColumn();
+
+            return $value === false ? null : $value;
+        } finally {
+            $this->reset();
+        }
+    }
+
     private function reset(): void
     {
         // $this->table = ''; // keep table for model query. table fixed in model class
@@ -433,32 +487,5 @@ class QueryBuilder
         $this->wheres = [];
         $this->bindings = [];
         $this->paramCounter = 0;
-    }
-
-    public function pluck(string $column): array
-    {
-        // Handle qualified column names (e.g., 'roles.name')
-        $alias = str_contains($column, '.')
-            ? str_replace('.', '_', $column)
-            : $column;
-        $this->select("$column as $alias");
-
-        $rows = $this->get();
-        $result = [];
-
-        foreach ($rows as $row) {
-            $result[] = $row->{$alias};  // Use alias instead
-        }
-
-        return $result;
-    }
-
-    public function value(string $column): mixed
-    {
-        $this->select("$column AS __value");
-
-        $row = $this->first();
-
-        return $row?->__value;
     }
 }

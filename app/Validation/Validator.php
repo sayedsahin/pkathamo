@@ -115,7 +115,13 @@ final class Validator
     {
         foreach ($this->fields($fields) as $field) {
             $value = $this->value($field);
-            if (! $this->has($field) || $value === '' || $value === null) {
+            if (
+                !$this->has($field)
+                || $value === null
+                || $value === ''
+                || (is_string($value) && trim($value) === '')
+                || (is_array($value) && $value === [])
+            ) {
                 $this->error($field, 'This field is required.');
             }
         }

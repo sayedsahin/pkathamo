@@ -84,7 +84,7 @@ if (!function_exists('show_flash')) {
 			echo "<div class='alert alert-danger'>";
 			foreach ($msg as $key => $value) {
 				foreach ($value as $k => $val) {
-					echo "* " . $val . " (" . $k . ")<br>";
+					echo "* " . e($val) . " (" . e($k) . ")<br>";
 				}
 			}
 			echo "</div>";

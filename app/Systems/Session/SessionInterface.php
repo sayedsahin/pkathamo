@@ -11,4 +11,5 @@ interface SessionInterface
     public function flush(): void;
     public function regenerate(): void;
     public function destroy(): void;
+    public function close(): void;
 }

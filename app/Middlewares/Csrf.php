@@ -11,7 +11,7 @@ class Csrf implements MiddlewareInterface
     public function handle(): ?Response
     {
         $method = request()->method();
-        if (!in_array($method, ['POST', 'PUT', 'PATCH'], true)){
+        if (!in_array($method, ['POST', 'PUT', 'PATCH', 'DELETE'], true)){
             return null;
         }
 

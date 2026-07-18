@@ -83,22 +83,13 @@ final class MiddlewareKernel
     private static function resolve(string|array $middleware): object
     {
         if (is_string($middleware)) {
-            if (!class_exists($middleware)) {
-                throw new RuntimeException(
-                    "Middleware not found: {$middleware}"
-                );
-            }
-
             return new $middleware();
         }
 
         $class = $middleware[0] ?? null;
         $arguments = $middleware[1] ?? [];
 
-        if (
-            !is_string($class)
-            || !class_exists($class)
-        ) {
+        if (!is_string($class)) {
             throw new RuntimeException(
                 'Invalid middleware definition.'
             );

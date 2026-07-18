@@ -64,11 +64,10 @@ final class Auth
         self::setId($userId);
     }
 
-    public static function once(int $userId): void
+    public static function once(int $userId, mixed $user = null): void
     {
-        // Stateless (no session)
         self::setId($userId);
-        self::setUser(null);
+        self::setUser($user);
     }
 
     public static function logout(): void
