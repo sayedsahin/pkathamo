@@ -6,12 +6,14 @@ use App\Systems\Container;
 
 $container = new Container();
 
+$config = config('container');
+
 /*
 |--------------------------------------------------------------------------
 | Register Singletons
 |--------------------------------------------------------------------------
 */
-foreach (config('container.singletons', []) as $class) {
+foreach ($config['singletons'] as $class) {
     $container->singleton($class);
 }
 
@@ -20,7 +22,7 @@ foreach (config('container.singletons', []) as $class) {
 | Register Bindings
 |--------------------------------------------------------------------------
 */
-foreach (config('container.bindings', []) as $abstract => $concrete) {
+foreach ($config['bindings'] as $abstract => $concrete) {
     $container->bind($abstract, $concrete);
 }
 

@@ -17,7 +17,7 @@ final class Database
                 . ":host=" . $db_config['host']
                 . ";port=" . $db_config['port']
                 . ";dbname=" . $db_config['database']
-                . ";charset=". $db_config['charset'] ?? 'utf8mb4';
+                . ";charset=". $db_config['charset'];
 
             $this->pdo = new PDO(
                 $dsn,

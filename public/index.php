@@ -59,9 +59,10 @@ require ROOT_PATH . '/bootstrap/container.php';
 |--------------------------------------------------------------------------
 */
 $kernel = new \App\Systems\Middleware\MiddlewareKernel();
+$config = config('middleware');
 
-$kernel->web(config('middleware.web'));
-$kernel->api(config('middleware.api'));
+$kernel->web($config['web']);
+$kernel->api($config['api']);
 
 $kernel->run($isApi);
 
