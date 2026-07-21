@@ -69,6 +69,7 @@ class ApiAuthController extends Controller
                 ->required(['name', 'username', 'email', 'password', 'password_confirmation'])
                 ->string(['name', 'username', 'email', 'password', 'password_confirmation'])
                 ->email('email')
+                ->min(['password', 'password_confirmation'], 8)
                 ->confirmed('password')
                 ->validated();
         } catch (\App\Validation\ValidationException $e) {
@@ -176,13 +177,12 @@ class ApiAuthController extends Controller
 
     public function logout()
     {
-        $header = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
+        $token = request()->bearerToken();
 
-        if (!str_starts_with($header, 'Bearer ')) {
+        if ($token === null) {
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
-        $token = substr($header, 7);
         $hashedToken = hash('sha256', $token);
 
         $deleted = db()->table('api_tokens')

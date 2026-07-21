@@ -15,7 +15,7 @@ return [
             'password' => env('DB_PASSWORD', ''),
             'charset' => 'utf8mb4',
             'options' => [
-                'persistent' => env('DB_PERSISTENT', true),
+                'persistent' => env('DB_PERSISTENT', false),
             ],
         ],
     ],

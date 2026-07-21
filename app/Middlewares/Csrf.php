@@ -10,16 +10,23 @@ class Csrf implements MiddlewareInterface
 {
     public function handle(): ?Response
     {
-        $method = request()->method();
-        if (!in_array($method, ['POST', 'PUT', 'PATCH', 'DELETE'], true)){
+        $method = strtoupper(request()->method());
+
+        if (!in_array($method, ['POST', 'PUT', 'PATCH', 'DELETE'], true)) {
             return null;
         }
 
-        $session_token = Session::get('_csrf');
+        $sessionToken = Session::get('_csrf');
 
-        $token = request()->post('_csrf') ?? '';
+        $token = request()->post('_csrf')
+            ?? request()->header('x-csrf-token')
+            ?? request()->json('_csrf', '');
 
-        if (!hash_equals($session_token ?? '', $token)) {
+        if (
+            !is_string($sessionToken)
+            || !is_string($token)
+            || !hash_equals($sessionToken, $token)
+        ) {
             return response()->html('CSRF token mismatch', 419);
         }
 

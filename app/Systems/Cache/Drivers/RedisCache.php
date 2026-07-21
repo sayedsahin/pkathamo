@@ -27,19 +27,49 @@ final class RedisCache implements CacheInterface
 
         $redis = new Redis();
 
-        if (!$redis->connect(
-            $this->config['host'],
-            (int) $this->config['port']
-        )) {
-            throw new RuntimeException('Redis connection failed.');
-        }
+        $host = (string) ($this->config['host'] ?? '127.0.0.1');
+        $port = (int) ($this->config['port'] ?? 6379);
+        $timeout = (float) ($this->config['timeout'] ?? 2.0);
+        $readTimeout = (float) ($this->config['read_timeout'] ?? 2.0);
 
-        if (!empty($this->config['password'])) {
-            $redis->auth($this->config['password']);
-        }
+        try {
+            if (!$redis->connect($host, $port, $timeout)) {
+                throw new RuntimeException("Unable to connect to Redis at {$host}:{$port}.");
+            }
 
-            $cache_db = (int) ($this->config['cache_db'] ?? $this->config['db'] ?? 0);
-            $redis->select($cache_db);
+            if (defined('Redis::OPT_READ_TIMEOUT')) {
+                $redis->setOption(Redis::OPT_READ_TIMEOUT, $readTimeout);
+            }
+
+            $username = $this->config['username'] ?? null;
+            $password = $this->config['password'] ?? null;
+
+            if ($password !== null && $password !== '') {
+                $credentials = $username !== null && $username !== ''
+                    ? [(string) $username, (string) $password]
+                    : (string) $password;
+
+                if (!$redis->auth($credentials)) {
+                    throw new RuntimeException('Redis authentication failed.');
+                }
+            }
+
+            $database = (int) (
+                $this->config['cache_db']
+                ?? $this->config['db']
+                ?? 0
+            );
+
+            if (!$redis->select($database)) {
+                throw new RuntimeException("Unable to select Redis database {$database}.");
+            }
+        } catch (\RedisException $exception) {
+            throw new RuntimeException(
+                'Redis cache connection failed: ' . $exception->getMessage(),
+                0,
+                $exception
+            );
+        }
 
         return $this->redis = $redis;
     }

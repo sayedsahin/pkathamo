@@ -33,8 +33,11 @@ final class RememberMe implements MiddlewareInterface
             return null;
         }
 
-        if ($row->user_agent !== $_SERVER['HTTP_USER_AGENT']) {
+        $userAgent = (string) request()->header('user-agent', '');
+
+        if (!hash_equals((string) $row->user_agent, $userAgent)) {
             Cookie::forget('remember_token');
+
             return null;
         }
 

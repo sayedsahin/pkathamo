@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+
 /*
 |--------------------------------------------------------------------------
 | Bootstrap Paths & Autoload
@@ -25,6 +26,13 @@ require ROOT_PATH . '/bootstrap/config.php';
 |--------------------------------------------------------------------------
 */
 $isApi = is_api_request();
+
+
+\App\Systems\Exception\ExceptionHandler::register(
+    (bool) config('app.debug'),
+    $isApi
+);
+
 
 if (!$isApi) {
     require ROOT_PATH . '/bootstrap/session.php';

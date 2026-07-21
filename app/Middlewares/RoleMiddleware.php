@@ -32,8 +32,8 @@ class RoleMiddleware implements MiddlewareInterface
         if (!Role::any($this->roles)) {
             if ($isApi) {
                 return response()->json([
-                    'error' => 'Unauthorized',
-                ], 401);
+                    'error' => 'Forbidden',
+                ], 403);
             }
 
             return response()->html('Forbidden', 403);

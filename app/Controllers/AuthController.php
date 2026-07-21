@@ -42,7 +42,6 @@ class AuthController extends Controller
 				->required(['email', 'password'])
 				->nullable(['remember'])
 				->email('email')
-				// ->min('password', 8)
 				->validated();
 
 			// ✅ validated() Return only validated fields
@@ -117,7 +116,7 @@ class AuthController extends Controller
 			->required(['name', 'username', 'email', 'password', 'password_confirmation'])
 			->string(['name', 'username', 'email', 'password', 'password_confirmation'])
 			->email('email')
-			// ->min(['password', 'password_confirmation'], 8)
+			->min(['password', 'password_confirmation'], 8)
 			->confirmed('password');
 		if ($validator->fails()) {
 			$errors = $validator->errors();
@@ -147,12 +146,14 @@ class AuthController extends Controller
 
 		$input['password'] = $password = password_hash($input['password'], PASSWORD_DEFAULT);
 
+		$verificationToken = bin2hex(random_bytes(32));// verification token sent to email
+
 		$user_id = db()->table('users')->insert([
 			'name' => $input['name'],
 			'username' => $input['username'],
 			'email' => $input['email'],
 			'password' => $input['password'],
-			'verification_token' => bin2hex(random_bytes(32)),
+			'verification_token' => hash('sha256', $verificationToken),
             'email_verified' => 0,
 			'created_at' => date('Y-m-d H:i:s'),
 			'updated_at' => date('Y-m-d H:i:s'),
