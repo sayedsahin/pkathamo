@@ -1,16 +1,38 @@
 # Introduction
 
-Pkathamo provides a compact framework core without a long-running async runtime or a large service-provider graph.
+**Pkathamo** is a lightweight PHP framework built around three core principles: **Lightweight**, **Fast** and **Simple**.
 
-## Design goals
+It provides the essential features required for modern web applications while keeping the request lifecycle direct, predictable and easy to understand.
 
-- Standard PHP-FPM and Apache compatibility
-- Small request bootstrap
-- Direct middleware execution
-- PDO-based database access
-- Built-in request, response, validation, session, authentication, cache and rate limiting
-- Driver-based cache and rate-limit storage
-- Minimal magic and predictable control flow
+Pkathamo is designed for developers who need more than a minimal router but do not want the complexity, hidden behavior or runtime overhead of a large full-stack framework.
+
+## Core Philosophy
+
+- **Performance First** – Every design decision prioritizes fast execution, low memory usage and minimal request-time work.
+- **Simple by Design** – Clean APIs and a clear application structure let developers focus on application logic instead of framework internals.
+- **Efficient Development** – Practical built-in tools reduce repetitive code without taking control away from the developer.
+- **Minimal Overhead** – Services and drivers are initialized only when needed, avoiding unnecessary work during every request.
+- **Predictable Behavior** – Important operations remain explicit, with minimal magic, hidden state or deeply nested abstractions.
+- **Developer Friendly** – Familiar PHP patterns, readable source code and straightforward configuration make the framework easy to learn and debug.
+
+## What Makes Pkathamo Different
+
+Pkathamo combines a lightweight runtime with the practical features commonly required by production applications.
+
+A minimal framework may provide only routing and responses, requiring developers to assemble authentication, validation, sessions, caching and rate limiting separately.
+
+A large full-stack framework may provide those features through a more complex boot process, service lifecycle, ORM layer and abstraction stack.
+
+Pkathamo takes a focused approach:
+
+```text
+Lightweight core
++
+Essential application features
++
+Direct and predictable execution
+```
+
 
 ## Main components
 
@@ -28,18 +50,3 @@ Pkathamo provides a compact framework core without a long-running async runtime 
 | RateLimiter | File, APCu, Redis or Memcached counters |
 | ExceptionHandler | Central HTML, JSON and CLI error handling |
 | Container | Constructor dependency resolution and singletons |
-
-## Web and API requests
-
-A request is considered an API request when its normalized path is exactly `/api` or begins with `/api/`.
-
-```php
-function is_api_request(): bool
-{
-    $path = request()->path();
-
-    return $path === '/api' || str_starts_with($path, '/api/');
-}
-```
-
-This keeps behavior deterministic and independent of the `Accept` header.

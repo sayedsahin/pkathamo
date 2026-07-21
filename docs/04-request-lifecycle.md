@@ -46,3 +46,18 @@ if ($result instanceof \App\Systems\Response) {
 ```
 
 A controller that renders a view may return `void`, because `view()` includes the PHP template directly.
+
+## Web and API Request Detection
+
+Pkathamo identifies API requests by their normalized URL path.
+
+A request is considered an API request when its path is exactly `/api` or begins with `/api/`.
+
+```php
+function is_api_request(): bool
+{
+    $path = request()->path();
+
+    return $path === '/api' || str_starts_with($path, '/api/');
+}
+```
