@@ -16,13 +16,17 @@ class QueryBuilder
 {
     protected PDO $pdo;
 
-    protected string $table = '';
-    protected array $select = ['*'];
-    protected array $joins = [];
-    protected array $wheres = [];
-    protected array $bindings = [];
-    protected string $order = '';
-    protected string $limit = '';
+    // Model Property
+    protected string $defaultTable = '';
+    protected array $defaultSelect = ['*'];
+
+    private string $table;
+    private array $select;
+    private array $joins = [];
+    private array $wheres = [];
+    private array $bindings = [];
+    private string $order = '';
+    private string $limit = '';
 
     private int $paramCounter = 0;
 
@@ -41,6 +45,9 @@ class QueryBuilder
      */
     public function __construct(?Database $db = null)
     {
+        $this->table = $this->defaultTable;
+        $this->select = $this->defaultSelect;
+
         if ($db === null) {
             global $container;
             $db = $container->make(Database::class);
@@ -721,12 +728,13 @@ class QueryBuilder
      */
     private function reset(): void
     {
-        // $this->table = ''; // Keep table for model query. Table is fixed in model class.
+        $this->table = $this->defaultTable;
+        $this->select = $this->defaultSelect;
+
         $this->order = '';
         $this->limit = '';
         $this->rawSql = null;
 
-        $this->select = ['*'];
         $this->joins = [];
         $this->wheres = [];
         $this->bindings = [];
