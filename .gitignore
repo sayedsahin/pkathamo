@@ -2,6 +2,7 @@
 *.pdf
 *.zip
 *.ini
+*.sqlite
 .env
 # /public
 /storage/cache/**/*

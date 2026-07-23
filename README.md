@@ -1,6 +1,6 @@
 # Pkathamo
 
-**Pkathamo** is a lightweight PHP framework designed for building super-fast, simple and efficient web applications.
+**Pkathamo** is a lightweight PHP framework built around three core principles: **Performance**, **Simplicity** and **Efficiency**.
 
 ## Requirements
 
@@ -590,7 +590,8 @@ $user = db()
 ```
 
 ```php
-$users = db()
+// With database connection
+$users = db('sqlite')
     ->table('users')
     ->where('status', 'active')
     ->orWhere('role', 'admin')
@@ -987,7 +988,7 @@ php bin/cache-config.php
 Rebuild route cache:
 
 ```bash
-php bin/cache-routes.php
+php bin/cache-route.php
 ```
 
 Generate optimized Composer autoload files:
@@ -1076,7 +1077,7 @@ Recommended production steps:
 ```bash
 composer install --no-dev --optimize-autoloader
 php bin/cache-config.php
-php bin/cache-routes.php
+php bin/cache-route.php
 ```
 
 Production environment:
