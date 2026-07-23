@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Systems;
 
-use PDO;
 use InvalidArgumentException;
+use PDO;
 
 /**
  * Lightweight SQL Query Builder.
@@ -15,6 +15,7 @@ use InvalidArgumentException;
 class QueryBuilder
 {
     protected PDO $pdo;
+    private string $driver;
 
     // Model Property
     protected string $defaultTable = '';
@@ -43,7 +44,7 @@ class QueryBuilder
      *
      * Example 3: `$query = new QueryBuilder($database);`
      */
-    public function __construct(?Database $db = null)
+    public function __construct(?Database $db = null, ?string $connection = null)
     {
         $this->table = $this->defaultTable;
         $this->select = $this->defaultSelect;
@@ -52,8 +53,8 @@ class QueryBuilder
             global $container;
             $db = $container->make(Database::class);
         }
-
-        $this->pdo = $db->pdo;
+        $this->pdo = $db->connection($connection);
+        $this->driver = $db->driver($connection);
     }
 
 
@@ -85,10 +86,15 @@ class QueryBuilder
      *
      * Example 1: `User::query()->select('id', 'email')->get()`
      */
-        public static function query(): static
-        {
-            return new static();
-        }
+    public static function query(?string $connection = null): static
+    {
+        global $container;
+
+        return new static(
+            $container->make(Database::class),
+            $connection
+        );
+    }
 
 
     /* ============================================================
@@ -307,7 +313,7 @@ class QueryBuilder
      * The expression must always be developer-controlled.
      *
      * Example 1: `->order('created_at DESC')->get()`
-     * Example 1: `->order('Country ASC, CustomerName DESC')->get()`
+     * Example 2: `->order('Country ASC, CustomerName DESC')->get()`
      */
     public function order(string $order): self
     {
@@ -396,7 +402,7 @@ class QueryBuilder
      * Example 1: `->table('users')->find(5)`
      * Example 2: `->table('users')->find(10, 'user_id')`
      */
-    public function find(int $id, string $column = 'id'): ?object
+    public function find(int|string $id, string $column = 'id'): ?object
     {
         return $this->where($column, $id)->first();
     }
@@ -410,7 +416,8 @@ class QueryBuilder
     {
         try {
             if ($this->rawSql) {
-                $sql = "SELECT EXISTS({$this->rawSql})";
+                $rawSql = rtrim($this->rawSql, " \t\n\r\0\x0B;");
+                $sql = "SELECT EXISTS({$rawSql})";
             } else {
                 $sql = "SELECT EXISTS(SELECT 1 FROM {$this->table}"
                     . $this->compileJoins()
@@ -437,7 +444,8 @@ class QueryBuilder
     {
         try {
             if ($this->rawSql) {
-                $sql = "SELECT COUNT(*) AS total FROM ({$this->rawSql}) AS sub";
+                $rawSql = rtrim($this->rawSql, " \t\n\r\0\x0B;");
+                $sql = "SELECT COUNT(*) AS total FROM ({$rawSql}) AS sub";
             } else {
                 $sql = "SELECT COUNT({$column}) AS total FROM {$this->table}"
                     . $this->compileJoins()
@@ -465,11 +473,16 @@ class QueryBuilder
      *
      * Example 1: `->table('users')->insert(['name' => $name])`
      * Example 2: `->table('users')->insert(['name' => $name], true)`
+     * Example 3: `->table('users')->insert($data, true, 'user_id')`
      *
      */
-    public function insert(array $data, bool $returnId = false): bool|int
+    public function insert(array $data, bool $returnId = false, string $idColumn = 'id'): bool|int
     {
         try {
+            if ($data === []) {
+                throw new InvalidArgumentException('Insert data cannot be empty.');
+            }
+
             $cols = array_keys($data);
             $placeholders = [];
 
@@ -485,12 +498,20 @@ class QueryBuilder
                 . implode(', ', $placeholders)
                 . ")";
 
+            if ($returnId && $this->driver === 'pgsql') {
+                $sql .= " RETURNING {$idColumn}";
+            }
+
             $stmt = $this->pdo->prepare($sql);
             $stmt->execute($this->bindings);
 
-            $id = $returnId ? (int) $this->pdo->lastInsertId() : true;
+            if (!$returnId) {
+                return true;
+            }
 
-            return $id;
+            return $this->driver === 'pgsql'
+                ? (int) $stmt->fetchColumn()
+                : (int) $this->pdo->lastInsertId();
         } finally {
             $this->reset();
         }
@@ -508,6 +529,10 @@ class QueryBuilder
         try {
             if (empty($this->wheres)) {
                 throw new InvalidArgumentException("UPDATE without WHERE is forbidden!");
+            }
+
+            if ($data === []) {
+                throw new InvalidArgumentException('Update data cannot be empty.');
             }
 
             $set = [];
@@ -539,6 +564,10 @@ class QueryBuilder
      */
     public function updateOrInsert(array $search, array $data = []): bool|int
     {
+        if ($search === []) {
+            throw new InvalidArgumentException('Search conditions cannot be empty.');
+        }
+
         $checker = clone $this;
         $checker->whereConditions($search);
 
@@ -584,6 +613,7 @@ class QueryBuilder
      *
      * Example 1: `->raw('UPDATE users SET status = ? WHERE id = ?', ['active', 5])->execute()`
      * Example 2: `->raw('INSERT INTO users (name) VALUES (?)', [$name])->execute(true)`
+     * Example 3: `->raw('INSERT INTO users (name) VALUES (?) RETURNING id', [$name])->execute(true)`
      *
      */
     public function execute(bool $returnId = false): bool|int
@@ -596,7 +626,23 @@ class QueryBuilder
             $stmt = $this->pdo->prepare($this->rawSql);
             $success = $stmt->execute($this->bindings);
 
-            return $returnId ? (int) $this->pdo->lastInsertId() : $success;
+            if (!$returnId) {
+                return $success;
+            }
+
+            if ($this->driver === 'pgsql') {
+                $id = $stmt->fetchColumn();
+
+                if ($id === false) {
+                    throw new InvalidArgumentException(
+                        'PostgreSQL raw insert must include a RETURNING column.'
+                    );
+                }
+
+                return (int) $id;
+            }
+
+            return (int) $this->pdo->lastInsertId();
         } finally {
             $this->reset();
         }

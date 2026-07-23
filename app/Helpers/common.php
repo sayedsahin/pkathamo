@@ -16,7 +16,7 @@ if (!function_exists('cache')) {
 }
 
 if (!function_exists('db')) {
-    function db(): DB
+    function db(?string $connection = null): DB
     {
         global $container;
 
@@ -26,7 +26,7 @@ if (!function_exists('db')) {
             Database::class
         );
 
-        return new DB($database);
+        return new DB($database, $connection);
     }
 }
 
