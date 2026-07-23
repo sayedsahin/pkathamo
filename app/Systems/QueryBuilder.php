@@ -17,9 +17,14 @@ class QueryBuilder
     protected PDO $pdo;
     private string $driver;
 
+    // Transaction
+    protected Database $database;
+    protected ?string $connectionName = null;
+
     // Model Property
     protected string $defaultTable = '';
     protected array $defaultSelect = ['*'];
+    protected ?string $defaultConnection = null;
 
     private string $table;
     private array $select;
@@ -53,6 +58,12 @@ class QueryBuilder
             global $container;
             $db = $container->make(Database::class);
         }
+
+        $connection ??= $this->defaultConnection;
+
+        $this->database = $db;
+        $this->connectionName = $connection;
+
         $this->pdo = $db->connection($connection);
         $this->driver = $db->driver($connection);
     }
@@ -476,7 +487,7 @@ class QueryBuilder
      * Example 3: `->table('users')->insert($data, true, 'user_id')`
      *
      */
-    public function insert(array $data, bool $returnId = false, string $idColumn = 'id'): bool|int
+    public function insert(array $data, bool $returnId = false, string $primaryKey = 'id'): bool|int
     {
         try {
             if ($data === []) {
@@ -499,7 +510,7 @@ class QueryBuilder
                 . ")";
 
             if ($returnId && $this->driver === 'pgsql') {
-                $sql .= " RETURNING {$idColumn}";
+                $sql .= " RETURNING {$primaryKey}";
             }
 
             $stmt = $this->pdo->prepare($sql);

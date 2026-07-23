@@ -21,13 +21,13 @@ return [
 
         'pgsql' => [
             'driver' => 'pgsql',
-            'host' => env('PGSQL_DB_HOST', '127.0.0.1'),
-            'port' => (int) env('PGSQL_DB_PORT', 5432),
-            'database' => env('PGSQL_DB_NAME', ''),
-            'username' => env('PGSQL_DB_USERNAME', 'postgres'),
-            'password' => env('PGSQL_DB_PASSWORD', ''),
+            'host' => env('PGSQL_DB_HOST', env('DB_HOST', '127.0.0.1')),
+            'port' => (int) env('PGSQL_DB_PORT', env('DB_PORT', 5432)),
+            'database' => env('PGSQL_DB_NAME', env('DB_NAME', '')),
+            'username' => env('PGSQL_DB_USERNAME', env('DB_USERNAME', 'postgres')),
+            'password' => env('PGSQL_DB_PASSWORD', env('DB_PASSWORD', '')),
             'options' => [
-                'persistent' => env('PGSQL_DB_PERSISTENT', false),
+                'persistent' => env('PGSQL_DB_PERSISTENT', env('DB_PERSISTENT', false)),
             ],
         ],
 

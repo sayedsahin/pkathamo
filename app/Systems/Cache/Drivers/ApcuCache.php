@@ -36,10 +36,6 @@ final class ApcuCache implements CacheInterface
 
     public function put(string $key, mixed $value, int $ttl = 0): void
     {
-        if ($ttl < 0) {
-            throw new InvalidArgumentException('Cache TTL cannot be negative.');
-        }
-
         apcu_store($this->key($key), $value, $ttl);
     }
 

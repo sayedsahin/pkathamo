@@ -72,11 +72,6 @@ final class MemcachedCache implements CacheInterface
 
     public function put(string $key, mixed $value, int $ttl = 0): void
     {
-
-        if ($ttl < 0) {
-            throw new InvalidArgumentException('Cache TTL cannot be negative.');
-        }
-
         $this->memcached->set($this->key($key), $value, $this->expiration($ttl));
 
     }

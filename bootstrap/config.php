@@ -13,10 +13,9 @@ if (is_file($cacheFile)) {
 } else {
     require ROOT_PATH . '/bootstrap/dotenv.php';
 
-    $items = ConfigLoader::load(ROOT_PATH . '/config');
-    ConfigLoader::writeCache($cacheFile, $items);
-
-    Config::load($items);
+    Config::load(
+        ConfigLoader::load(ROOT_PATH . '/config')
+    );
 }
 
 date_default_timezone_set((string) config('app.timezone', 'UTC'));

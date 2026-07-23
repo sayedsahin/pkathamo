@@ -73,6 +73,9 @@ final class Cache
 
     public static function put(string $key, mixed $value, int $ttl = 0): void
     {
+        if ($ttl < 0) {
+            throw new \InvalidArgumentException('Cache TTL cannot be negative.');
+        }
         self::driver()->put($key, $value, $ttl);
     }
 
@@ -93,6 +96,9 @@ final class Cache
 
     public static function remember(string $key, int $ttl, callable $callback): mixed
     {
+        if ($ttl < 0) {
+            throw new \InvalidArgumentException('Cache TTL cannot be negative.');
+        }
         /*
          * driver() has been called once.
          */

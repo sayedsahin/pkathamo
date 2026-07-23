@@ -20,13 +20,10 @@ if (!function_exists('db')) {
     {
         global $container;
 
-        static $database = null;
-
-        $database ??= $container->make(
-            Database::class
+        return new DB(
+            $container->make(Database::class),
+            $connection
         );
-
-        return new DB($database, $connection);
     }
 }
 

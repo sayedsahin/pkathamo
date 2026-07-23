@@ -172,4 +172,46 @@ final class Database
             $pdo->exec("PRAGMA synchronous = {$synchronous}");
         }
     }
+
+    public function beginTransaction(?string $connection = null): bool
+    {
+        return $this->connection($connection)->beginTransaction();
+    }
+
+    public function commit(?string $connection = null): bool
+    {
+        return $this->connection($connection)->commit();
+    }
+
+    public function rollBack(?string $connection = null): bool
+    {
+        $pdo = $this->connection($connection);
+
+        return $pdo->inTransaction() && $pdo->rollBack();
+    }
+
+    public function inTransaction(?string $connection = null): bool
+    {
+        return $this->connection($connection)->inTransaction();
+    }
+
+    public function transaction(callable $callback, ?string $connection = null): mixed
+    {
+        $pdo = $this->connection($connection);
+        $pdo->beginTransaction();
+
+        try {
+            $result = $callback();
+
+            $pdo->commit();
+
+            return $result;
+        } catch (\Throwable $e) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+
+            throw $e;
+        }
+    }
 }

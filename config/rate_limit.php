@@ -11,7 +11,7 @@ return [
     | redis: use for multiple servers or containers.
     | apcu/memcached: optional single-server stores.
     */
-    'driver' => env('RATE_LIMIT_STORE', 'apcu'),
+    'driver' => env('RATE_LIMIT_STORE', 'file'),
 
     'prefix' => env(
         'RATE_LIMIT_PREFIX',

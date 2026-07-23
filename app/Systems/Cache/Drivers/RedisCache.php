@@ -125,10 +125,12 @@ final class RedisCache implements CacheInterface
 
         $iterator = null;
 
-        while ($keys = $redis->scan($iterator, $prefix . '*', 100)) {
-            if (!empty($keys)) {
+        do {
+            $keys = $redis->scan($iterator, $prefix . '*', 100);
+
+            if (is_array($keys) && $keys !== []) {
                 $redis->del($keys);
             }
-        }
+        } while ($iterator !== 0 && $iterator !== '0');
     }
 }
