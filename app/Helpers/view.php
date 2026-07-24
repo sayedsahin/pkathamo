@@ -16,6 +16,15 @@ if (!function_exists('view')) {
     }
 }
 
+if (!function_exists('view')) {
+    function component(string $name, array $data = []): void
+    {
+        extract($data);
+
+        require VIEW_PATH . "/components/{$name}.php";
+    }
+}
+
 if (!function_exists('e')) {
     function e(mixed $value): string
     {
