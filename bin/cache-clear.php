@@ -57,8 +57,8 @@ try {
 */
 if (is_dir($cachePath)) {
     $protectedFiles = [
-        $cachePath . '/.gitkeep',
-        $cachePath . '/README.md',
+        '.gitkeep',
+        'README.md',
     ];
 
     $iterator = new RecursiveIteratorIterator(
@@ -68,8 +68,7 @@ if (is_dir($cachePath)) {
 
     foreach ($iterator as $item) {
         $path = $item->getPathname();
-
-        if (in_array($path, $protectedFiles, true)) {
+        if (in_array($item->getFilename(), $protectedFiles, true)) {
             continue;
         }
 
