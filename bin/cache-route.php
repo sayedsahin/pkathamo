@@ -1,5 +1,5 @@
 <?php
-// Command: php bin/cache-route.php
+// Command: php run cache:route
 // Caches FastRoute dispatcher for production performance
 
 require_once __DIR__ . '/../vendor/autoload.php';

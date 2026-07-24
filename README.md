@@ -75,7 +75,7 @@ RATE_LIMIT_PREFIX=pkathamo:rate-limit:
 After changing `.env` or a cached configuration file, rebuild the configuration cache:
 
 ```bash
-php bin/cache-config.php
+php run cache:config
 ```
 
 ## Development Server
@@ -982,13 +982,19 @@ storage/cache/config.php
 Rebuild configuration cache:
 
 ```bash
-php bin/cache-config.php
+php run cache:config
 ```
 
 Rebuild route cache:
 
 ```bash
-php bin/cache-route.php
+php run cache:route
+```
+
+Clear application cache:
+
+```bash
+php run cache:clear
 ```
 
 Generate optimized Composer autoload files:
@@ -1076,8 +1082,8 @@ Recommended production steps:
 
 ```bash
 composer install --no-dev --optimize-autoloader
-php bin/cache-config.php
-php bin/cache-route.php
+php run cache:config
+php run cache:route
 ```
 
 Production environment:

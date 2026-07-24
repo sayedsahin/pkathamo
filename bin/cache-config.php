@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-// Command: php bin/cache-config.php
+// Command: php run cache:config
 // Recreates the config cache from .env + config/*.php.
 
 require_once __DIR__ . '/../config/path.php';
